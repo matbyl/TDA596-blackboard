@@ -1,0 +1,51 @@
+# util module
+
+# ------------------------------------------------------------------------------
+# Wrap into HTTP headers
+# ------------------------------------------------------------------------------
+def make_http_response(status, status_text, htmlresponse):
+  response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html\r\nContent-length: %i\r\n\r\n%s"
+  return response_template % (status, status_text, len(htmlresponse), htmlresponse)
+
+# ------------------------------------------------------------------------------
+#  Creates a 404 response to display in HTTP request
+# ------------------------------------------------------------------------------
+def make_404_response(msgheader):
+  # Do not mix HTML code with the server code as done here. This is a bad practice
+  template = '<html><head><style>.status {color: red;font-size: 75%%;}</style></head><body><pre><samp class="status">%s</samp></pre></body><html>'
+  htmlresponse = template % ("404 Not Found\n" + msgheader)
+  res = make_http_response(404, 'Not Found', htmlresponse)
+
+# ------------------------------------------------------------------------------
+#  Creates a 404 response to display in HTTP request
+# ------------------------------------------------------------------------------
+def make_post_request(msgheader, entry):
+  template = '{"entry": %s}'
+  htmlresponse = template % entry
+  return make_http_response(200, 'OK', htmlresponse)
+
+# ------------------------------------------------------------------------------
+# Utility function to extract the contents (payload) from HTTP request
+# ------------------------------------------------------------------------------
+def extract_http_request_contents(header):
+  # find content length
+  content_length = header.split('Content-Length: ')[1]
+  content_length = int(content_length.split('\r\n')[0])
+
+  # extract the http response body and discard the header
+  contents = header[-content_length:]
+  return contents
+
+# ------------------------------------------------------------------------------
+# Utility function to extract query parameter from HTML query
+# ------------------------------------------------------------------------------
+def extract_parameters_from_query(msg):
+  # extract the query parameters as a dictionary: {name:value}
+  # example input format: comment=aa&ip=127.0.0.1&port=63101&action=Delete
+  parameters={}
+  arr = msg.split('&')
+  for a in arr:
+    pp = a.split('=')
+    if len(pp)>1:
+      parameters[pp[0]] = pp[1]
+  return parameters

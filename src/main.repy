@@ -1,0 +1,108 @@
+# FEEL FREE TO CHANGE THE CODE. 
+# This is just a dull example
+
+include api.repy
+include connector.repy
+
+# ------------------------------------------------------------------------------
+# Start listening and handle incoming connections in board() function
+# ------------------------------------------------------------------------------   
+def start_board():
+  ip = mycontext['ip']
+  port = mycontext['port']
+  print "Listening on IP " + str(ip) +" port " + str(port)
+  try: 
+    listencommhandle = waitforconn(ip, port, board_connection_handler)
+  except Exception, e:
+    print "Exception in start_board: %s, %s\n" %(type(e), e)
+    raise
+    #pass
+
+# ------------------------------------------------------------------------------    
+# Called when an incoming message is received. 
+# --> Important starting point
+# ------------------------------------------------------------------------------    
+def board_connection_handler(ip, port, sockobj, thiscommhandle, listencommhandle):
+  try:
+    msgheader = sockobj.recv( ) # Receive message
+    
+    print 'CHANGE ME!!!\n'
+
+    print '****Request:\n%s' % msgheader
+    # React depending on message type: HTTP GET or POST, or some other type of communication.
+    if msgheader.startswith( 'GET' ):
+      get_board_handler(msgheader, sockobj, thiscommhandle)
+    else:
+      other_requests_handler(msgheader, sockobj, thiscommhandle)
+
+  except Exception, e:
+    print "Exception in board: %s, %s\n" %(type(e), e)
+    #raise
+
+
+# ------------------------------------------------------------------------------
+# Outputs the blackboard html 
+# ------------------------------------------------------------------------------   
+def generate_html_page():
+
+  # dynamic title showing Ip address, port and up time. 
+  title='Sample board @ %s:%d. Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
+  content = mycontext['boardcontents_template'] %( title, "".join(mycontext['entries']))
+  fullpage_h = mycontext['frontpage_header_template'] + content
+  fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']
+  #print entries, content, fullpage
+  return fullpage
+
+# ------------------------------------------------------------------------------
+# Creates and adds a new entry to the global variable entries
+# ------------------------------------------------------------------------------
+def add_entry(msg, msgid):
+  entry = mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
+  mycontext['entries'].append(entry)
+  return
+
+# ------------------------------------------------------------------------------    
+# Main entry point of the program. Initalizes global variables in mycontext
+# and calls start_board() which opens a socket for incoming connections.
+# ------------------------------------------------------------------------------
+if callfunc == 'initialize':
+  # DEFINE GLOBAS
+  mycontext['entries'] = []
+
+
+  # whenever this vessel gets a connection on its IP:port it'll call function board_connection_handler
+  if len(callargs) == 1 or len(callargs) == 2:
+    port = int(callargs[0])
+    if len(callargs) == 2:
+      ip=str(callargs[1])
+    else:
+      try:
+        ip = getmyip()
+      except Exception, e:
+        print "Could not get an IP\n"
+        print (type(e), e)
+        raise
+  
+  # Fail if we don't have 1 or 2 arguments  
+  else:
+    raise Exception("Usage: python <path to repy.py> <path to restrictions.default> main.repy <port> [ip (optional)]")
+
+  #Initialize Port and IP
+  mycontext['port'] = port
+  mycontext['ip'] = ip
+  
+  #read html template files
+  mycontext['entry_template'] = file("entry_template.html").read()
+  mycontext['boardcontents_template'] = file("boardcontents_template.html").read()
+  mycontext['frontpage_header_template'] = file("board_frontpage_header_template.html").read()
+  mycontext['frontpage_footer_template'] = file("board_frontpage_footer_template.html").read()
+
+  mycontext['authors'] = "Mathias Bylund, Anton Rose"
+
+  # e = Exception("ex");
+  # try:
+  #   print "%s, %s\n" %(type(e), e)
+  # except Exception, ee:
+  #   print ee
+
+  start_board()

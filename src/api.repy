@@ -1,0 +1,32 @@
+# Blackboard API module
+
+include util.repy
+
+# ------------------------------------------------------------------------------
+# Handles initial GET request from browser, outputs HTML string and closes socket.
+# ------------------------------------------------------------------------------
+def get_board_handler(msgheader, sockobj, thiscommhandle):
+  htmlresponse = generate_html_page()
+  res = make_http_response(200, 'OK', htmlresponse)
+  sockobj.send(res)
+  stopcomm(thiscommhandle)
+
+# ------------------------------------------------------------------------------
+# Handles initial GET request from browser, outputs HTML string and closes socket.
+# ------------------------------------------------------------------------------
+def other_requests_handler(msgheader, sockobj, thiscommhandle):
+  # extract the query from the HTTP request
+  query = extract_http_request_contents(msgheader)
+  print query
+  # extract the query parameters
+  parameters = extract_parameters_from_query(query)
+  print msgheader
+  entry = parameters['entry']
+
+  if not entry:
+    res = make_404_response(msgheader)
+  else:
+    res = make_post_request(msgheader, entry)
+
+  sockobj.send(res)
+  stopcomm(thiscommhandle)
