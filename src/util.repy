@@ -3,7 +3,7 @@
 # ------------------------------------------------------------------------------
 # Wrap into HTTP headers
 # ------------------------------------------------------------------------------
-def make_http_response(status, status_text, htmlresponse):
+def make_http_response(status, status_text, htmlresponse=''):
   response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html\r\nContent-length: %i\r\n\r\n%s"
   return response_template % (status, status_text, len(htmlresponse), htmlresponse)
 
@@ -29,12 +29,15 @@ def make_post_request(msgheader, entry):
 # ------------------------------------------------------------------------------
 def extract_http_request_contents(header):
   # find content length
-  content_length = header.split('Content-Length: ')[1]
-  content_length = int(content_length.split('\r\n')[0])
+  try:
+    content_length = header.split('Content-Length: ')[1]
+    content_length = int(content_length.split('\r\n')[0])
 
-  # extract the http response body and discard the header
-  contents = header[-content_length:]
-  return contents
+    # extract the http response body and discard the header
+    contents = header[-content_length:]
+    return contents
+  except Exception:
+    return False
 
 # ------------------------------------------------------------------------------
 # Utility function to extract query parameter from HTML query
@@ -49,3 +52,13 @@ def extract_parameters_from_query(msg):
     if len(pp)>1:
       parameters[pp[0]] = pp[1]
   return parameters
+
+# ------------------------------------------------------------------------------
+# Utility function to parse an endpoint
+# ------------------------------------------------------------------------------
+def parse_endpoint(endpoint):
+  parts = endpoint.split('/')
+  return {
+    "resource": "/" + parts[0],
+    "id": parts[1]
+  }

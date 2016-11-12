@@ -1,0 +1,9 @@
+class Message:
+    def __init__(self, msg):
+        lines = msg.split('\n')
+
+        self.type = lines[0].split(' ')[0]
+        self.resource = lines[0].split(' ')[1]
+
+    def __str__(self):
+        return 'Type: ' + self.type + '\nResource: ' + self.uri

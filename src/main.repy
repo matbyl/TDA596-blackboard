@@ -3,6 +3,7 @@
 
 include api.repy
 include connector.repy
+include handlers.repy
 
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections in board() function
@@ -22,18 +23,30 @@ def start_board():
 # Called when an incoming message is received. 
 # --> Important starting point
 # ------------------------------------------------------------------------------    
-def board_connection_handler(ip, port, sockobj, thiscommhandle, listencommhandle):
+def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
   try:
-    msgheader = sockobj.recv( ) # Receive message
-    
-    print 'CHANGE ME!!!\n'
+    msgheader = socketobj.recv(1024)
 
-    print '****Request:\n%s' % msgheader
+    query = extract_http_request_contents(msgheader)
+
+    if query:
+      parameters = extract_parameters_from_query(query)
+      print parameters
+
+    method = msgheader.split(' ')[0]
+    endpoint = msgheader.split(' ')[1]
+
+
     # React depending on message type: HTTP GET or POST, or some other type of communication.
-    if msgheader.startswith( 'GET' ):
-      get_board_handler(msgheader, sockobj, thiscommhandle)
-    else:
-      other_requests_handler(msgheader, sockobj, thiscommhandle)
+
+    if method == 'GET':
+      res = get_handler(endpoint)
+    elif method == 'POST':
+      res = post_handler(endpoint, parameters)
+
+    #print res
+    socketobj.send(res)
+    stopcomm(thiscommhandle)
 
   except Exception, e:
     print "Exception in board: %s, %s\n" %(type(e), e)
@@ -45,30 +58,35 @@ def board_connection_handler(ip, port, sockobj, thiscommhandle, listencommhandle
 # ------------------------------------------------------------------------------   
 def generate_html_page():
 
-  # dynamic title showing Ip address, port and up time. 
+  # dynamic title showing Ip address, port and up time.
   title='Sample board @ %s:%d. Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
-  content = mycontext['boardcontents_template'] %( title, "".join(mycontext['entries']))
+  content = mycontext['boardcontents_template'] %( title, "".join(mycontext['entries'].values()))
   fullpage_h = mycontext['frontpage_header_template'] + content
   fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']
   #print entries, content, fullpage
   return fullpage
-
-# ------------------------------------------------------------------------------
-# Creates and adds a new entry to the global variable entries
-# ------------------------------------------------------------------------------
-def add_entry(msg, msgid):
-  entry = mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
-  mycontext['entries'].append(entry)
-  return
 
 # ------------------------------------------------------------------------------    
 # Main entry point of the program. Initalizes global variables in mycontext
 # and calls start_board() which opens a socket for incoming connections.
 # ------------------------------------------------------------------------------
 if callfunc == 'initialize':
-  # DEFINE GLOBAS
-  mycontext['entries'] = []
+  # DEFINE GLOBALS
+  mycontext['entries'] = {}
+  api = Api()
 
+  handlers = {
+    'GET': get_board
+  }
+  api.add_resource(handlers, ['/', '/board'])
+
+  handlers = {
+    'POST': add_entry,
+    'DELETE': remove_entry
+  }
+  api.add_resource(handlers, ['/entries'])
+
+  mycontext['api'] = api
 
   # whenever this vessel gets a connection on its IP:port it'll call function board_connection_handler
   if len(callargs) == 1 or len(callargs) == 2:
@@ -92,10 +110,10 @@ if callfunc == 'initialize':
   mycontext['ip'] = ip
   
   #read html template files
-  mycontext['entry_template'] = file("entry_template.html").read()
-  mycontext['boardcontents_template'] = file("boardcontents_template.html").read()
-  mycontext['frontpage_header_template'] = file("board_frontpage_header_template.html").read()
-  mycontext['frontpage_footer_template'] = file("board_frontpage_footer_template.html").read()
+  mycontext['entry_template'] = open("entry_template.html").read()
+  mycontext['boardcontents_template'] = open("boardcontents_template.html").read()
+  mycontext['frontpage_header_template'] = open("board_frontpage_header_template.html").read()
+  mycontext['frontpage_footer_template'] = open("board_frontpage_footer_template.html").read()
 
   mycontext['authors'] = "Mathias Bylund, Anton Rose"
 

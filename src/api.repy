@@ -1,32 +1,44 @@
 # Blackboard API module
 
-include util.repy
 
-# ------------------------------------------------------------------------------
-# Handles initial GET request from browser, outputs HTML string and closes socket.
-# ------------------------------------------------------------------------------
-def get_board_handler(msgheader, sockobj, thiscommhandle):
-  htmlresponse = generate_html_page()
-  res = make_http_response(200, 'OK', htmlresponse)
-  sockobj.send(res)
-  stopcomm(thiscommhandle)
+class Api:
 
-# ------------------------------------------------------------------------------
-# Handles initial GET request from browser, outputs HTML string and closes socket.
-# ------------------------------------------------------------------------------
-def other_requests_handler(msgheader, sockobj, thiscommhandle):
-  # extract the query from the HTTP request
-  query = extract_http_request_contents(msgheader)
-  print query
-  # extract the query parameters
-  parameters = extract_parameters_from_query(query)
-  print msgheader
-  entry = parameters['entry']
+  def __init__(self):
+    self.resources = {}
 
-  if not entry:
-    res = make_404_response(msgheader)
-  else:
-    res = make_post_request(msgheader, entry)
+  def get(self, endpoint):
+    return self.resources[endpoint].handle('GET', )
 
-  sockobj.send(res)
-  stopcomm(thiscommhandle)
+  def post(self, endpoint, args):
+    return self.resources[endpoint].handle('POST', args)
+
+  def delete(self, endpoint, args):
+    endpoint_parts = endpoint.split('/')
+    resource = '/' + endpoint_parts[1]
+    id = endpoint_parts[2]
+
+    return self.resources[resource].handle('DELETE', id)
+
+  def put(self, endpoint, args):
+    return self.resources[endpoint].handle('PUT', args)
+
+  def add_resource(self, handlers, endpoints, collection=False):
+    resource = Resource(handlers, collection)
+
+    for endpoint in endpoints:
+      self.resources[endpoint] = resource
+
+
+class Resource:
+
+  def __init__(self, handlers, collection):
+      self.handlers = handlers
+      self.collection = collection
+
+  def handle(self, method=None, *args):
+
+    if self.handlers[method]:
+      if args:
+        return self.handlers[method](*args)
+      else:
+        return self.handlers[method]()
