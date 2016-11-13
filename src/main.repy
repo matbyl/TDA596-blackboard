@@ -11,6 +11,7 @@ include handlers.repy
 def start_board():
   ip = mycontext['ip']
   port = mycontext['port']
+
   print "Listening on IP " + str(ip) +" port " + str(port)
   try: 
     listencommhandle = waitforconn(ip, port, board_connection_handler)
@@ -26,26 +27,38 @@ def start_board():
 def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
   try:
     msgheader = socketobj.recv(1024)
-
     query = extract_http_request_contents(msgheader)
 
     if query:
       parameters = extract_parameters_from_query(query)
-      print parameters
 
     method = msgheader.split(' ')[0]
     endpoint = msgheader.split(' ')[1]
 
-
     # React depending on message type: HTTP GET or POST, or some other type of communication.
-
     if method == 'GET':
       res = get_handler(endpoint)
-    elif method == 'POST':
-      res = post_handler(endpoint, parameters)
+    else:
+      host = extract_http_request_header_value(msgheader, "host")
+
+      if isHost(host):
+        print "SENDING TO NEIGHBORS"
+        connections = open_connections_to_neighbors()
+        send_msg_to_neighbors(connections, msgheader)
+        close_connections_to_neighbors(connections)
+
+      if method == 'POST':
+        res = post_handler(endpoint, parameters)
+      elif method == 'PUT':
+        res = mycontext['api'].put(endpoint, parameters)
+      elif method == 'DELETE':
+        res = mycontext['api'].delete(endpoint)
 
     #print res
-    socketobj.send(res)
+    if res:
+      socketobj.send(res)
+
+
     stopcomm(thiscommhandle)
 
   except Exception, e:
@@ -82,7 +95,8 @@ if callfunc == 'initialize':
 
   handlers = {
     'POST': add_entry,
-    'DELETE': remove_entry
+    'DELETE': remove_entry,
+    'PUT': modify_entry
   }
   api.add_resource(handlers, ['/entries'])
 

@@ -1,14 +1,19 @@
 # Handler module
 
 include util.repy
+include uniqueid.repy
 
 def get_handler(endpoint):
   return mycontext['api'].get(endpoint)
 
 def post_handler(endpoint, parameters):
 
-  if parameters.has_key('delete') and parameters['delete']:
-    return mycontext['api'].delete(endpoint, parameters)
+
+  if parameters.has_key('delete'):
+    if int(parameters['delete']) == 1:
+      return mycontext['api'].delete(endpoint)
+    else:
+      return mycontext['api'].put(endpoint, parameters)
   else:
     return mycontext['api'].post(endpoint, parameters)
 
@@ -26,8 +31,9 @@ def get_board():
 def add_entry(parameters):
   try:
     msg = parameters['entry']
-    msgid = len(mycontext['entries'])
-    entry = mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
+    msgid = uniqueid_getid()
+    print msgid
+    entry = generate_entry(msgid, msg)
     mycontext['entries'][msgid] = entry
 
 
@@ -38,7 +44,14 @@ def add_entry(parameters):
 
 def remove_entry(msgid):
   try:
-    del mycontext['entries'][int(msgid)]
-    return make_http_response(200, 'OK', "Removed entry: " + msgid)
+    del mycontext['entries'][msgid]
+    return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
   except Exception:
     raise Exception("Unable to remove entry")
+
+def modify_entry(msgid, msg):
+  try:
+    mycontext['entries'][msgid] = generate_entry(msgid, msg)
+    return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+  except Exception:
+    raise Exception("Unable to modify entry")

@@ -6,13 +6,22 @@
 def get_all_neighbors():
   f = open('neighborlist.txt')
   neighbors = []
-  port = '63127'
+  port = 63127
 
   for line in f.readlines():
-    data = line.split(':')
-    neighbors.append(port + ':' + data[1])
+    if mycontext['ip'] == "127.0.0.1":
+      host = line.split(":")[0]
+      port = int(line.split(":")[1])
+    else:
+      host = line
+
+
+    # Do not include current host (or int(data[1]) != mycontext['port'])
+    if host != mycontext['ip'] or port != mycontext['port']:
+      neighbors.append({"host": host, "port": port})
 
   return neighbors
+
 
 # ------------------------------------------------------------------------------
 #  Creates connections to all the neighbors
@@ -22,6 +31,18 @@ def open_connections_to_neighbors():
   connections = []
 
   for neighbor in neighbors:
-    connections.append(neighbor)
+    connection = openconn(neighbor['host'], neighbor['port'])
+    if connection:
+      connections.append(connection)
 
   return connections
+
+
+def close_connections_to_neighbors(connections):
+  for connection in connections:
+    connection.close()
+
+
+def send_msg_to_neighbors(connections, msg):
+  for connection in connections:
+    connection.send(msg)

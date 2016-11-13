@@ -40,6 +40,19 @@ def extract_http_request_contents(header):
     return False
 
 # ------------------------------------------------------------------------------
+# Utility function to extract the host from HTTP request
+# ------------------------------------------------------------------------------
+def extract_http_request_header_value(headers, header):
+  # find content length
+  try:
+    tail = headers.split(header.capitalize() + ': ')[1]
+    value = tail.split('\r\n')[0]
+
+    return value
+  except Exception:
+    return False
+
+# ------------------------------------------------------------------------------
 # Utility function to extract query parameter from HTML query
 # ------------------------------------------------------------------------------
 def extract_parameters_from_query(msg):
@@ -62,3 +75,10 @@ def parse_endpoint(endpoint):
     "resource": "/" + parts[0],
     "id": parts[1]
   }
+
+def generate_entry(msgid, msg):
+  return mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
+
+def isHost(host):
+  thisHost = mycontext['ip'] + ":" + str(mycontext['port'])
+  return thisHost == host

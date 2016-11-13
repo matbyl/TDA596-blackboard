@@ -12,15 +12,20 @@ class Api:
   def post(self, endpoint, args):
     return self.resources[endpoint].handle('POST', args)
 
-  def delete(self, endpoint, args):
+  def delete(self, endpoint):
     endpoint_parts = endpoint.split('/')
     resource = '/' + endpoint_parts[1]
-    id = endpoint_parts[2]
+    msgid = int(endpoint_parts[2])
 
-    return self.resources[resource].handle('DELETE', id)
+    return self.resources[resource].handle('DELETE', msgid)
 
   def put(self, endpoint, args):
-    return self.resources[endpoint].handle('PUT', args)
+    endpoint_parts = endpoint.split('/')
+    resource = '/' + endpoint_parts[1]
+    msgid = int(endpoint_parts[2])
+    msg = args['entry']
+
+    return self.resources[resource].handle('PUT', msgid, msg)
 
   def add_resource(self, handlers, endpoints, collection=False):
     resource = Resource(handlers, collection)
