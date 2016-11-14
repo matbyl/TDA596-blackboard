@@ -7,7 +7,7 @@ class Api:
     self.resources = {}
 
   def get(self, endpoint):
-    return self.resources[endpoint].handle('GET', )
+    return self.resources[endpoint].handle('GET')
 
   def post(self, endpoint, args):
     return self.resources[endpoint].handle('POST', args)

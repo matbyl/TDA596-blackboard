@@ -1,4 +1,4 @@
-
+include util.repy
 
 # ------------------------------------------------------------------------------
 # Retrieves all the neighbors
@@ -9,40 +9,37 @@ def get_all_neighbors():
   port = 63127
 
   for line in f.readlines():
+
+    # only asasume we have a port when working locally
     if mycontext['ip'] == "127.0.0.1":
-      host = line.split(":")[0]
+      ip = line.split(":")[0]
       port = int(line.split(":")[1])
     else:
-      host = line
+      ip = line.strip('\n')
 
+    print '-------------------------'
+    print 'I AM: ' + str(mycontext['ip']) + ':' + str(mycontext['port'])
+    print '-------------------------'
+
+    host = get_host(ip, port)
 
     # Do not include current host (or int(data[1]) != mycontext['port'])
-    if host != mycontext['ip'] or port != mycontext['port']:
-      neighbors.append({"host": host, "port": port})
+    if not isHost(host):
+      print '-------------------------'
+      print 'U R: ' + str(ip) + ':' + str(port)
+      print '-------------------------'
+      neighbors.append(Neighbor(ip, port))
 
   return neighbors
 
 
-# ------------------------------------------------------------------------------
-#  Creates connections to all the neighbors
-# ------------------------------------------------------------------------------
-def open_connections_to_neighbors():
-  neighbors = get_all_neighbors()
-  connections = []
+class Neighbor:
 
-  for neighbor in neighbors:
-    connection = openconn(neighbor['host'], neighbor['port'])
-    if connection:
-      connections.append(connection)
+  def __init__(self, ip, port):
+    self.ip = str(ip)
+    self.port = int(port)
 
-  return connections
-
-
-def close_connections_to_neighbors(connections):
-  for connection in connections:
-    connection.close()
-
-
-def send_msg_to_neighbors(connections, msg):
-  for connection in connections:
+  def send_msg(self, msg):
+    connection = openconn(self.ip, self.port)
     connection.send(msg)
+    connection.close()

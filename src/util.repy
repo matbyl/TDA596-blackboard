@@ -80,5 +80,8 @@ def generate_entry(msgid, msg):
   return mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
 
 def isHost(host):
-  thisHost = mycontext['ip'] + ":" + str(mycontext['port'])
+  thisHost = get_host(mycontext['ip'], mycontext['port'])
   return thisHost == host
+
+def get_host(ip, port):
+  return str(ip) + ":" + str(port)

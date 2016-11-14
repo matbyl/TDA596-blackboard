@@ -34,19 +34,12 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 
     method = msgheader.split(' ')[0]
     endpoint = msgheader.split(' ')[1]
+    host = extract_http_request_header_value(msgheader, "host")
 
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     if method == 'GET':
       res = get_handler(endpoint)
     else:
-      host = extract_http_request_header_value(msgheader, "host")
-
-      if isHost(host):
-        print "SENDING TO NEIGHBORS"
-        connections = open_connections_to_neighbors()
-        send_msg_to_neighbors(connections, msgheader)
-        close_connections_to_neighbors(connections)
-
       if method == 'POST':
         res = post_handler(endpoint, parameters)
       elif method == 'PUT':
@@ -54,12 +47,16 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       elif method == 'DELETE':
         res = mycontext['api'].delete(endpoint)
 
-    #print res
     if res:
       socketobj.send(res)
 
 
     stopcomm(thiscommhandle)
+
+    print "HOST" + host
+    if isHost(host):
+      for neighbor in mycontext['neighbors']:
+        neighbor.send_msg(msgheader)
 
   except Exception, e:
     print "Exception in board: %s, %s\n" %(type(e), e)
@@ -86,6 +83,8 @@ def generate_html_page():
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
+
+
   api = Api()
 
   handlers = {
@@ -122,7 +121,8 @@ if callfunc == 'initialize':
   #Initialize Port and IP
   mycontext['port'] = port
   mycontext['ip'] = ip
-  
+  mycontext['neighbors'] = get_all_neighbors()
+
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()
   mycontext['boardcontents_template'] = open("boardcontents_template.html").read()
