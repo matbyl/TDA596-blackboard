@@ -121,6 +121,12 @@ if callfunc == 'initialize':
   #Initialize Port and IP
   mycontext['port'] = port
   mycontext['ip'] = ip
+
+  #Assigns a random number as the id of the host
+  mycontext['hostId']=int(randomfloat()*1000)
+
+  #Nearest neighbor of the current host
+  mycontext['nearestNeighbor']=None
   mycontext['neighbors'] = get_all_neighbors()
 
   #read html template files

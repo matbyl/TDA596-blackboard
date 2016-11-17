@@ -6,8 +6,9 @@ include util.repy
 def get_all_neighbors():
   f = open('neighborlist.txt')
   neighbors = []
-  port = 63127
-
+  port =  mycontext['port']
+  hostIndex = 0
+  neighborIndex=0
   for line in f.readlines():
 
     # only asasume we have a port when working locally
@@ -22,16 +23,33 @@ def get_all_neighbors():
     print '-------------------------'
 
     host = get_host(ip, port)
-
+    hostIndex+ = 1
     # Do not include current host (or int(data[1]) != mycontext['port'])
     if not isHost(host):
       print '-------------------------'
       print 'U R: ' + str(ip) + ':' + str(port)
       print '-------------------------'
+
       neighbors.append(Neighbor(ip, port))
+    else:
+    # After identifying the host we find the neighbor index
+      neighborIndex=hostIndex
+
+  mycontext[nearestNeighbor]=get_nearest_neighbor(neighborIndex,neighbors)
 
   return neighbors
 
+# ------------------------------------------------------------------------------
+# Retrieves the next available neighbor from the ring, when the neighbor index is
+#  bigger than the available neighbors it will reset the index to zero (ring topology)
+#  #TODO  handling the failure node case
+# ------------------------------------------------------------------------------
+def get_nearest_neighbor(neighborIndex,neighbors):
+  neighbor=None
+  if neighborIndex > len(neighbors):
+    neighborIndex=0
+
+  return neighbors[neighborIndex]
 
 class Neighbor:
 
