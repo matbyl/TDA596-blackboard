@@ -1,0 +1,18 @@
+class Elector:
+
+  def __init__(self, initiator):
+    self.initiator = None
+    self.leader = None
+
+  def elect(self, leader):
+    self.leader = leader
+
+  def __str__(self):
+    return "-----------------------" + \
+           "\nInitiator: " + self.initiator + \
+           "\nLeader: " + self.leader + \
+           "\n----------------------"
+
+
+
+#self abstract class Host

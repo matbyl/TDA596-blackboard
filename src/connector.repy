@@ -8,7 +8,7 @@ def get_all_neighbors():
   neighbors = []
   port =  mycontext['port']
   hostIndex = 0
-  neighborIndex=0
+  neighborIndex=None
   for line in f.readlines():
 
     # only asasume we have a port when working locally
@@ -23,19 +23,22 @@ def get_all_neighbors():
     print '-------------------------'
 
     host = get_host(ip, port)
-    hostIndex+ = 1
+
     # Do not include current host (or int(data[1]) != mycontext['port'])
     if not isHost(host):
       print '-------------------------'
       print 'U R: ' + str(ip) + ':' + str(port)
       print '-------------------------'
 
-      neighbors.append(Neighbor(ip, port))
-    else:
+      neighbors.append(Neighbor(ip, port, hostIndex))
+    elif neighborIndex == None:
     # After identifying the host we find the neighbor index
       neighborIndex=hostIndex
 
-  mycontext[nearestNeighbor]=get_nearest_neighbor(neighborIndex,neighbors)
+    # Increment host index when a new one has been added to the neighborlist
+    hostIndex += 1
+
+  mycontext['nearestNeighbor']=get_nearest_neighbor(neighborIndex,neighbors)
 
   return neighbors
 
@@ -46,10 +49,14 @@ def get_all_neighbors():
 # ------------------------------------------------------------------------------
 def get_nearest_neighbor(neighborIndex,neighbors):
   neighbor=None
-  if neighborIndex > len(neighbors):
+
+  if neighborIndex > len(neighbors) - 1:
     neighborIndex=0
 
   return neighbors[neighborIndex]
+
+def get_next_nearest_neighbor(nearestNeighbor, neighbors):
+  return neighbors[neighbors.index(nearestNeighbor) + 1 % len(neighbors)]
 
 class Neighbor:
 
@@ -61,3 +68,9 @@ class Neighbor:
     connection = openconn(self.ip, self.port)
     connection.send(msg)
     connection.close()
+
+  def get_host(self):
+    return self.ip + ":" + self.port
+
+  def __str__(self):
+    return "IP: " + str(self.ip) + "\nPort: " + str(self.port)

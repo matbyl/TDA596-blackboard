@@ -83,7 +83,9 @@ def generate_html_page():
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
-
+  mycontext['lock'] = getlock()
+  mycontext['timer'] = gettimer()
+  mycontext['leader'] = None
 
   api = Api()
 
@@ -128,6 +130,14 @@ if callfunc == 'initialize':
   #Nearest neighbor of the current host
   mycontext['nearestNeighbor']=None
   mycontext['neighbors'] = get_all_neighbors()
+
+
+
+  # Start election
+  mycontext['lock'].aquire()
+
+  sett
+
 
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()
