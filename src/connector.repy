@@ -1,5 +1,5 @@
 include util.repy
-
+include sockettimeout.repy
 # ------------------------------------------------------------------------------
 # Retrieves all the neighbors
 # ------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ def get_all_neighbors():
       print 'U R: ' + str(ip) + ':' + str(port)
       print '-------------------------'
 
-      neighbors.append(Neighbor(ip, port, hostIndex))
+      neighbors.append(Connection(ip, port, hostIndex))
     elif neighborIndex == None:
     # After identifying the host we find the neighbor index
       neighborIndex=hostIndex
@@ -58,19 +58,30 @@ def get_nearest_neighbor(neighborIndex,neighbors):
 def get_next_nearest_neighbor(nearestNeighbor, neighbors):
   return neighbors[neighbors.index(nearestNeighbor) + 1 % len(neighbors)]
 
-class Neighbor:
-
-  def __init__(self, ip, port):
+class Connection:
+  def __init__(self, ip, port, hostindex):
     self.ip = str(ip)
     self.port = int(port)
+    self.host_index = int(hostindex)
 
   def send_msg(self, msg):
-    connection = openconn(self.ip, self.port)
-    connection.send(msg)
-    connection.close()
+    try:
+      connection = timeout_openconn(self.ip, self.port)
+      if connection:
+        connection.send(msg)
+        connection.close()
+    except:
+      print "I FAIL"
 
   def get_host(self):
-    return self.ip + ":" + self.port
+    return self.ip + ":" + str(self.port)
+
+  def ping(self, fromHost):
+    message = "ping \nHost: " + fromHost + "\r\n"
+    self.send_msg(message)
+    print "message sent "+message
+
 
   def __str__(self):
     return "IP: " + str(self.ip) + "\nPort: " + str(self.port)
+

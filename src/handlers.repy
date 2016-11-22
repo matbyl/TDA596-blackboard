@@ -4,7 +4,17 @@ include util.repy
 include uniqueid.repy
 
 def get_handler(endpoint):
+    # if any thread has entered the election , then do nothing
+    # if not trigger the election from this thread
+
+    # ping nearest neighbor ,
+    # if alive then start the election and release lock
+    # if not alive , ping next nearest neighbor
+    # repeat
+
   return mycontext['api'].get(endpoint)
+
+
 
 def post_handler(endpoint, parameters):
 
