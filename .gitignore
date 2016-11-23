@@ -93,4 +93,12 @@ ENV/
 *.privatekey
 *.publickey
 
+# Ignore build
 out.repy
+
+# Ignore Seattle Framework
+seattle/**
+
+.vscode
+
+.dist.repy

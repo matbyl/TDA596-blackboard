@@ -1,4 +1,12 @@
-# util module
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# Util module
+#
+# Description: This module should contain functions that are useful in several
+# case. 
+#
+# ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
 # Wrap into HTTP headers
@@ -40,12 +48,13 @@ def extract_http_request_contents(header):
     return False
 
 # ------------------------------------------------------------------------------
-# Utility function to extract the host from HTTP request
+# Utility function to extract the value from a given header
 # ------------------------------------------------------------------------------
 def extract_http_request_header_value(headers, header):
-  # find content length
   try:
+    # Split on the color and extract the value part
     tail = headers.split(header.capitalize() + ': ')[1]
+    # Strip newline and return only the value
     value = tail.split('\r\n')[0]
 
     return value
@@ -80,8 +89,8 @@ def generate_entry(msgid, msg):
   return mycontext['entry_template'] % ('entries/%d' % (msgid), msgid, msg)
 
 def isHost(host):
-  thisHost = get_host(mycontext['ip'], mycontext['port'])
+  thisHost = get_host()
   return thisHost == host
 
-def get_host(ip, port):
-  return str(ip) + ":" + str(port)
+def get_host():
+  return str(mycontext['ip']) + ":" + str(mycontext['port'])

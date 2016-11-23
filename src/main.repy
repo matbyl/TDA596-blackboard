@@ -1,8 +1,6 @@
-# FEEL FREE TO CHANGE THE CODE. 
-# This is just a dull example
-
 include api.repy
-include connector.repy
+include neighbors.repy
+include election.repy
 include handlers.repy
 
 # ------------------------------------------------------------------------------
@@ -33,26 +31,14 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     if query:
       parameters = extract_parameters_from_query(query)
 
-    if msgheader.startswith('ping'):
-        print "Its a ping request from: " + host
-        ip=host.split(':')[0]
-        port = host.split(':')[1]
-
-        c = Connection(ip,port,0)
-        c.send_msg('pong')
-
-    elif msgheader.startswith('pong'):
-      print "Got a pong back"
-
     else:
+        res = ''
         method = msgheader.split(' ')[0]
         endpoint = msgheader.split(' ')[1]
-
 
         # React depending on message type: HTTP GET or POST, or some other type of communication.
         if method == 'GET':
           res = get_handler(endpoint)
-
         else:
           if method == 'POST':
             res = post_handler(endpoint, parameters)
@@ -69,9 +55,6 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     if isHost(host):
       for neighbor in mycontext['neighbors']:
         neighbor.send_msg(msgheader)
-
-
-
 
   except Exception, e:
     print "Exception in board: %s, %s\n" %(type(e), e)
@@ -100,7 +83,6 @@ if callfunc == 'initialize':
   mycontext['entries'] = {}
   mycontext['lock'] = getlock()
   mycontext['timer'] = None
-  mycontext['leader'] = None
 
   api = Api()
 
@@ -139,20 +121,17 @@ if callfunc == 'initialize':
   mycontext['port'] = port
   mycontext['ip'] = ip
 
-  #Assigns a random number as the id of the host
-  mycontext['hostId']=int(randomfloat()*1000)
-
-  #Nearest neighbor of the current host
-  mycontext['nearestNeighbor']=None
+  # Nearest neighbor of the current host
+  mycontext['nearestNeighbor'] = None
+  # NOTE: nearestNeighbor will also be added when all neighbors are added
   mycontext['neighbors'] = get_all_neighbors()
 
-  mycontext['nearestNeighbor'].ping(ip + ':' + str(port))
+  mycontext['election'] = Election(int(randomfloat()*1000), mycontext['nearestNeighbor'])
+
   # Start election
+  settimer(4, start_election, [])
+
   #mycontext['lock'].acquire()
-
-
-
-
 
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()
@@ -161,11 +140,5 @@ if callfunc == 'initialize':
   mycontext['frontpage_footer_template'] = open("board_frontpage_footer_template.html").read()
 
   mycontext['authors'] = "Mathias Bylund, Anton Rose"
-
-  # e = Exception("ex");
-  # try:
-  #   print "%s, %s\n" %(type(e), e)
-  # except Exception, ee:
-  #   print ee
 
   start_board()

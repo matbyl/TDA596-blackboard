@@ -1,0 +1,71 @@
+###############################################################################
+#
+# Name: election.repy
+#
+# Description: Class that handles the election process
+#
+###############################################################################
+
+class Election:
+
+  def __init__(self, initiator, neighbor):
+    self.initiator = initiator
+    self.neighbor = neighbor
+    self.nodes = []
+    self.leader = None
+    
+  def __str__(self):
+    return """
+    ID: {id}
+    Neighbor: {neighbor}
+    Nodes: {nodes}
+    Leader: {leader}
+    """.format(id = self.id, nodes = self.nodes, leader = self.leader, neighbor = self.neighbor)
+
+  def add_node(nodeID):
+    if(mycontext['hostId'] == nodeID):
+      end_election()
+    else:
+      nodes.append(nodeID)
+
+  def end_election(self):
+    self.leader = max(self.nodes)
+    self.nodes = []
+
+def start_election():
+  ip = mycontext['ip']
+  port = mycontext['port']
+
+  mycontext['election'].neighbor.send_ping()
+
+  print "Starting election process on IP " + str(ip) +" port " + str(port)
+  try: 
+    listencommhandle = waitforconn(ip, port, election_handler)
+  except Exception, e:
+    print "Exception in start_board: %s, %s\n" %(type(e), e)
+    raise
+
+def election_handler(ip, port, socket, handler, listener):
+  msgheader = socket.recv(1024)
+  host = extract_http_request_header_value(msgheader, "host")
+
+  print "Message: " + msgheader
+
+  # Iff there is a host in the header we handle cases where an answer is expected
+  if host:
+    ip = host.split(':')[0]
+    port = host.split(':')[1]
+
+    # Handle ping and pong requests to begin with
+    if msgheader.startswith('ping'):
+        print "ping"
+        ip = host.split(':')[0]
+        port = host.split(':')[1]
+
+        # Create a connection to the host that pinged and answer with pong
+        c = Connection( ip, port, 0)
+        c.send_pong()
+
+    elif msgheader.startswith('pong'):
+      connection = Connection( ip, port, 0)
+      # start election

@@ -1,14 +1,27 @@
+###############################################################################
+#
+# Name: neighbors.repy
+#
+# Description: Functions to handle the neighbor connections
+#
+###############################################################################
+
 include util.repy
+include connection.repy
 include sockettimeout.repy
+
 # ------------------------------------------------------------------------------
 # Retrieves all the neighbors
 # ------------------------------------------------------------------------------
 def get_all_neighbors():
   f = open('neighborlist.txt')
-  neighbors = []
-  port =  mycontext['port']
+
   hostIndex = 0
-  neighborIndex=None
+  port =  mycontext['port']
+
+  neighbors = []
+  neighborIndex = None
+
   for line in f.readlines():
 
     # only asasume we have a port when working locally
@@ -18,19 +31,12 @@ def get_all_neighbors():
     else:
       ip = line.strip('\n')
 
-    print '-------------------------'
-    print 'I AM: ' + str(mycontext['ip']) + ':' + str(mycontext['port'])
-    print '-------------------------'
-
-    host = get_host(ip, port)
+    host = ip + ":" + str(port)
 
     # Do not include current host (or int(data[1]) != mycontext['port'])
     if not isHost(host):
-      print '-------------------------'
-      print 'U R: ' + str(ip) + ':' + str(port)
-      print '-------------------------'
-
       neighbors.append(Connection(ip, port, hostIndex))
+
     elif neighborIndex == None:
     # After identifying the host we find the neighbor index
       neighborIndex=hostIndex
@@ -43,7 +49,7 @@ def get_all_neighbors():
   return neighbors
 
 # ------------------------------------------------------------------------------
-# Retrieves the next available neighbor from the ring, when the neighbor index is
+#  Retrieves the nearest available neighbor from the ring, when the neighbor index is
 #  bigger than the available neighbors it will reset the index to zero (ring topology)
 #  #TODO  handling the failure node case
 # ------------------------------------------------------------------------------
@@ -55,33 +61,8 @@ def get_nearest_neighbor(neighborIndex,neighbors):
 
   return neighbors[neighborIndex]
 
+# ------------------------------------------------------------------------------
+#  Retrieves the next nearest available neighbor from the ring
+# ------------------------------------------------------------------------------
 def get_next_nearest_neighbor(nearestNeighbor, neighbors):
   return neighbors[neighbors.index(nearestNeighbor) + 1 % len(neighbors)]
-
-class Connection:
-  def __init__(self, ip, port, hostindex):
-    self.ip = str(ip)
-    self.port = int(port)
-    self.host_index = int(hostindex)
-
-  def send_msg(self, msg):
-    try:
-      connection = timeout_openconn(self.ip, self.port)
-      if connection:
-        connection.send(msg)
-        connection.close()
-    except:
-      print "I FAIL"
-
-  def get_host(self):
-    return self.ip + ":" + str(self.port)
-
-  def ping(self, fromHost):
-    message = "ping \nHost: " + fromHost + "\r\n"
-    self.send_msg(message)
-    print "message sent "+message
-
-
-  def __str__(self):
-    return "IP: " + str(self.ip) + "\nPort: " + str(self.port)
-

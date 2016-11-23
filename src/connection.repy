@@ -1,0 +1,55 @@
+###############################################################################
+#
+# Name: connection.repy
+#
+# Description: A class to handle connections between vessels
+#
+###############################################################################
+
+class Connection:
+
+  def __init__(self, ip, port, hostindex):
+    self.ip = str(ip)
+    self.port = int(port)
+    self.host_index = int(hostindex)
+
+  def __str__(self):
+    return "IP: " + str(self.ip) + "\nPort: " + str(self.port)
+
+	# --------------------------------------
+	# Sends  a message to the connection
+	# --------------------------------------
+  def send_msg(self, msg):
+    try:
+      connection = timeout_openconn(self.ip, self.port)
+      if connection:
+        connection.send(msg)
+        connection.close()
+    except Exception, e:
+      print "Exception in " + self.get_host() + ": %s, %s\n" %(type(e), e)
+
+	# --------------------------------------
+	# Returns a host string in the
+	# following format: 'ip:port'
+	# --------------------------------------
+  def get_host(self):
+    return self.ip + ":" + str(self.port)
+
+	# --------------------------------------
+	# Sends a ping message to the connection
+	# with the current host attached to the
+	# header.
+	# --------------------------------------
+  def send_ping(self):
+    message = "ping \nHost: " + mycontext['ip'] + ":" + str(mycontext['port']) + "\r\n"
+    self.send_msg(message)
+	
+	# --------------------------------------
+	# Sends a pong message to the connection
+	# with the current host attached to the
+	# header.
+	# --------------------------------------
+  def send_pong(self):
+    message = "pong \nHost: " +  mycontext['ip'] + ":" + str(mycontext['port']) + "\r\n"
+    self.send_msg(message)
+		
