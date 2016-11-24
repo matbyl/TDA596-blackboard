@@ -8,19 +8,39 @@
 
 class Election:
 
-  def __init__(self, initiator, neighbor):
+  def __init__(self,id,initiator, neighbor):
+    self.id=id
     self.initiator = initiator
     self.neighbor = neighbor
     self.nodes = []
     self.leader = None
-    
+    self.leaderId=0
+
+  def get_election_message(self):
+
+    message=" ID: %s" % str(self.id)+'\n'
+    message=message+"Initiator: %s" % str(self.initiator)+'\n'
+    message = message + "Neighbor: %s" % str(self.neighbor) + '\n'
+    message = message + "Nodes: %s" % str(self.nodes) + '\n'
+    message = message + "Leader: %s" % str(self.leader)
+
+    return message
+
+  def get_message(self):
+      message = "Initiator: %s" % str(self.initiator)+'\n'
+      message="Leader host: %s" % str(self.leader)+'\n'
+      message = "Leader Id: %s" % str(self.leaderId)
+
+      return message
+
   def __str__(self):
     return """
     ID: {id}
+    Initiator:{initiator}
     Neighbor: {neighbor}
     Nodes: {nodes}
     Leader: {leader}
-    """.format(id = self.id, nodes = self.nodes, leader = self.leader, neighbor = self.neighbor)
+    """.format(id = self.id,initiator=self.initiator,nodes = self.nodes, leader = self.leader, neighbor = self.neighbor)
 
   def add_node(nodeID):
     if(mycontext['hostId'] == nodeID):
@@ -28,28 +48,36 @@ class Election:
     else:
       nodes.append(nodeID)
 
+
   def end_election(self):
     self.leader = max(self.nodes)
     self.nodes = []
+
 
 def start_election():
   ip = mycontext['ip']
   port = mycontext['port']
 
   mycontext['election'].neighbor.send_ping()
-
-  print "Starting election process on IP " + str(ip) +" port " + str(port)
-  try: 
-    listencommhandle = waitforconn(ip, port, election_handler)
+  try:
+    print "Starting election process on IP " + str(ip) + " port " + str(port)
+    #listencommhandle = waitforconn(ip, port, election_handler)
   except Exception, e:
     print "Exception in start_board: %s, %s\n" %(type(e), e)
     raise
+
+def start_sending_election():
+  message='Election \n'+mycontext['election'].get_message()
+  print "sending election data to neighbor"
+  mycontext['election'].neighbor.send_msg(message)
+
+
 
 def election_handler(ip, port, socket, handler, listener):
   msgheader = socket.recv(1024)
   host = extract_http_request_header_value(msgheader, "host")
 
-  print "Message: " + msgheader
+  print "Message:  " + msgheader
 
   # Iff there is a host in the header we handle cases where an answer is expected
   if host:

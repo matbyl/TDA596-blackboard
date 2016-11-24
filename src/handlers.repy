@@ -52,6 +52,32 @@ def add_entry(parameters):
   except Exception:
     raise Exception("Unable to handle add_entry request")
 
+
+def election_message_handler(message):
+  print "election hanlder"
+  initiator = parse_election_message(message,'Initiator:')
+  leaderhost=parse_election_message(message,'Leader host:')
+  leader_id = parse_election_message(message,'Leader Id:')
+
+  # if the id of election message is small than our id , we will assign the election data with our details ,
+  # else , assign leader from the message
+
+  if leader_id > mycontext['election'].id:
+    mycontext['election'].leaderId=leader_id
+    mycontext['election'].leader=leaderhost
+  else:
+    mycontext['election'].leaderId =mycontext['election'].id
+    mycontext['election'].leader=get_host()
+
+  if initiator  != get_host():
+    mycontext['election'].initiator=initiator
+    # send message to neighbor
+  else:
+    print "finish sending"
+    #assign leader based on message
+    #no need to send
+
+
 def remove_entry(msgid):
   try:
     del mycontext['entries'][msgid]

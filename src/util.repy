@@ -76,6 +76,23 @@ def extract_parameters_from_query(msg):
   return parameters
 
 # ------------------------------------------------------------------------------
+# Utility function to process election message
+# ------------------------------------------------------------------------------
+def parse_election_message(message,param):
+  values=message.split('\n')
+  value=None
+  if param=='Initiator:':
+    value=values[1].split(param)[1]
+  elif param=='Leader host:':
+    value=values[2].split(param)[1]
+
+  elif param=='Leader Id:':
+    value=values[3].split(param)[1]
+
+  return value
+
+
+# ------------------------------------------------------------------------------
 # Utility function to parse an endpoint
 # ------------------------------------------------------------------------------
 def parse_endpoint(endpoint):

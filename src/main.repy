@@ -3,6 +3,7 @@ include neighbors.repy
 include election.repy
 include handlers.repy
 
+
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections in board() function
 # ------------------------------------------------------------------------------   
@@ -18,6 +19,8 @@ def start_board():
     raise
     #pass
 
+
+
 # ------------------------------------------------------------------------------    
 # Called when an incoming message is received. 
 # --> Important starting point
@@ -27,6 +30,20 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     msgheader = socketobj.recv(1024)
     query = extract_http_request_contents(msgheader)
     host = extract_http_request_header_value(msgheader, "host")
+
+    if msgheader.startswith('ping'):
+      print "ping received"
+      ip = host.split(':')[0]
+      port = host.split(':')[1]
+      c = Connection(ip, port, 0)
+      c.send_pong()
+      print "pong sent to "+str(port)
+    elif msgheader.startswith('pong'):
+      print "pong received"
+      start_sending_election()
+    elif msgheader.startswith('Election '):
+      print "election"
+      print "electio data :\n"+msgheader
 
     if query:
       parameters = extract_parameters_from_query(query)
@@ -125,11 +142,19 @@ if callfunc == 'initialize':
   mycontext['nearestNeighbor'] = None
   # NOTE: nearestNeighbor will also be added when all neighbors are added
   mycontext['neighbors'] = get_all_neighbors()
+  mycontext['leader']=None
+  mycontext['election'] = Election(int(randomfloat()*1000),get_host(), mycontext['nearestNeighbor'])
+  print "neighbor data" +str(mycontext['nearestNeighbor'])
 
-  mycontext['election'] = Election(int(randomfloat()*1000), mycontext['nearestNeighbor'])
+  #print "election data" +str(mycontext['election'])
+  print "recent election data" + mycontext['election'].get_election_message()
 
   # Start election
-  settimer(4, start_election, [])
+  mycontext['electionhandle']=None
+  settimer(10, start_election, [])
+
+
+  print "Election not started\n"
 
   #mycontext['lock'].acquire()
 
