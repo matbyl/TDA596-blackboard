@@ -42,8 +42,10 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       print "pong received"
       start_sending_election()
     elif msgheader.startswith('Election '):
-      print "election"
-      print "electio data :\n"+msgheader
+      print "election from: "+ str(host)
+      election_message_handler(msgheader)
+      print "processed election :\n" + mycontext['election'].get_message()
+
 
     if query:
       parameters = extract_parameters_from_query(query)
@@ -146,15 +148,16 @@ if callfunc == 'initialize':
   mycontext['election'] = Election(int(randomfloat()*1000),get_host(), mycontext['nearestNeighbor'])
   print "neighbor data" +str(mycontext['nearestNeighbor'])
 
-  #print "election data" +str(mycontext['election'])
-  print "recent election data" + mycontext['election'].get_election_message()
+
 
   # Start election
   mycontext['electionhandle']=None
   settimer(10, start_election, [])
 
+  print "election data to send: " + mycontext['election'].get_message()
 
-  print "Election not started\n"
+
+
 
   #mycontext['lock'].acquire()
 

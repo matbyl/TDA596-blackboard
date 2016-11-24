@@ -59,6 +59,9 @@ def election_message_handler(message):
   leaderhost=parse_election_message(message,'Leader host:')
   leader_id = parse_election_message(message,'Leader Id:')
 
+  print "initiator :"+initiator
+  print "leaderhost :"+leaderhost
+  print "leader_id :"+leader_id
   # if the id of election message is small than our id , we will assign the election data with our details ,
   # else , assign leader from the message
 

@@ -10,11 +10,11 @@ class Election:
 
   def __init__(self,id,initiator, neighbor):
     self.id=id
-    self.initiator = initiator
+    self.initiator = get_host()
     self.neighbor = neighbor
     self.nodes = []
-    self.leader = None
-    self.leaderId=0
+    self.leader = get_host()
+    self.leaderId=id
 
   def get_election_message(self):
 
@@ -28,8 +28,8 @@ class Election:
 
   def get_message(self):
       message = "Initiator: %s" % str(self.initiator)+'\n'
-      message="Leader host: %s" % str(self.leader)+'\n'
-      message = "Leader Id: %s" % str(self.leaderId)
+      message=message+"Leader host: %s" % str(self.leader)+'\n'
+      message = message+ "Leader Id: %s" % str(self.leaderId)
 
       return message
 
