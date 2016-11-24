@@ -17,8 +17,6 @@ def get_handler(endpoint):
 
 
 def post_handler(endpoint, parameters):
-
-
   if parameters.has_key('delete'):
     if int(parameters['delete']) == 1:
       return mycontext['api'].delete(endpoint)
@@ -40,12 +38,15 @@ def get_board():
 # ------------------------------------------------------------------------------
 def add_entry(parameters):
   try:
+    mycontext['lock'].acquire()
+    
     msg = parameters['entry']
     msgid = uniqueid_getid()
     print msgid
     entry = generate_entry(msgid, msg)
     mycontext['entries'][msgid] = entry
 
+    mycontext['lock'].release()
 
     return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
 
@@ -54,45 +55,59 @@ def add_entry(parameters):
 
 
 def election_message_handler(message):
-  print "election hanlder"
+  mycontext['lock'].acquire()
+  
   initiator = parse_election_message(message,'Initiator:')
-  leaderhost=parse_election_message(message,'Leader host:')
+  leader_host = parse_election_message(message,'Leader host:')
   leader_id = parse_election_message(message,'Leader Id:')
 
-  print "initiator :"+initiator
-  print "leaderhost :"+leaderhost
-  print "leader_id :"+leader_id
+
   # if the id of election message is small than our id , we will assign the election data with our details ,
   # else , assign leader from the message
-  mycontext['lock'].acquire()
-  if leader_id > mycontext['election'].id:
-    mycontext['election'].leaderId=leader_id
-    mycontext['election'].leader=leaderhost
-  else:
-    mycontext['election'].leaderId =mycontext['election'].id
-    mycontext['election'].leader=get_host()
+  if int(leader_id) < mycontext['election'].id:
+    leader_id = str(mycontext['election'].id)
+    leader_host = get_host()
 
-  if initiator  != get_host():
-    mycontext['election'].initiator=initiator
-    mycontext['election'].neighbor.send_msg(mycontext['election'].get_message())
+  if initiator != get_host():
+    print "\n===========================\nForwarding message!\n===========================\n"
+    message = create_election_message(initiator, leader_host, leader_id)
+    print message + "\n\n"
+
+    mycontext['election'].neighbor.send_msg(message)
     # send message to neighbor
   else:
-    print "finish sending"
+    print "\n===========================\nDeclared a new leader\nIP:" + leader_host + "\nID:" + leader_id + " \n===========================\n"
+    ip = leader_host.split(":")[0].strip()
+    port = leader_host.split(":")[1].strip()
+
+    mycontext['leader'] = Connection(ip, port, 0)
+    mycontext['leader'].leader = leader_host
     #assign leader based on message
     #no need to send
+
   mycontext['lock'].release()
 
 
+def create_election_message( initiator, leader_host, leader_id):
+  message = "Election \nInitiator: " + initiator + "\n"
+  message += "Leader host: " + leader_host + "\n"
+  message += "Leader Id: " + leader_id + "\n"
+  return message
+
 def remove_entry(msgid):
   try:
+    mycontext['lock'].acquire()
     del mycontext['entries'][msgid]
     return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
+    mycontext['lock'].release()
   except Exception:
     raise Exception("Unable to remove entry")
 
 def modify_entry(msgid, msg):
   try:
+    mycontext['lock'].acquire()
     mycontext['entries'][msgid] = generate_entry(msgid, msg)
     return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+    mycontext['lock'].release()
   except Exception:
     raise Exception("Unable to modify entry")

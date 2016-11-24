@@ -14,7 +14,7 @@ class Connection:
     self.host_index = int(hostindex)
 
   def __str__(self):
-    return "IP: " + str(self.ip) + "\nPort: " + str(self.port)
+    return "\nIP: " + str(self.ip) + "\nPort: " + str(self.port) + "\n"
 
 	# --------------------------------------
 	# Sends  a message to the connection

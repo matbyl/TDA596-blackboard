@@ -59,41 +59,8 @@ def start_election():
   port = mycontext['port']
 
   mycontext['election'].neighbor.send_ping()
-  try:
-    print "Starting election process on IP " + str(ip) + " port " + str(port)
-    #listencommhandle = waitforconn(ip, port, election_handler)
-  except Exception, e:
-    print "Exception in start_board: %s, %s\n" %(type(e), e)
-    raise
+  print "\n===========================\nStarting election\n===========================\n"
 
 def start_sending_election():
   message='Election \n'+mycontext['election'].get_message()
-  print "sending election data to neighbor"
   mycontext['election'].neighbor.send_msg(message)
-
-
-
-def election_handler(ip, port, socket, handler, listener):
-  msgheader = socket.recv(1024)
-  host = extract_http_request_header_value(msgheader, "host")
-
-  print "Message:  " + msgheader
-
-  # Iff there is a host in the header we handle cases where an answer is expected
-  if host:
-    ip = host.split(':')[0]
-    port = host.split(':')[1]
-
-    # Handle ping and pong requests to begin with
-    if msgheader.startswith('ping'):
-        print "ping"
-        ip = host.split(':')[0]
-        port = host.split(':')[1]
-
-        # Create a connection to the host that pinged and answer with pong
-        c = Connection( ip, port, 0)
-        c.send_pong()
-
-    elif msgheader.startswith('pong'):
-      connection = Connection( ip, port, 0)
-      # start election

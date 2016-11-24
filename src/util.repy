@@ -89,7 +89,7 @@ def parse_election_message(message,param):
   elif param=='Leader Id:':
     value=values[3].split(param)[1]
 
-  return value
+  return value.strip()
 
 
 # ------------------------------------------------------------------------------
