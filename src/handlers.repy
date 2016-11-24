@@ -64,7 +64,7 @@ def election_message_handler(message):
   print "leader_id :"+leader_id
   # if the id of election message is small than our id , we will assign the election data with our details ,
   # else , assign leader from the message
-
+  mycontext['lock'].acquire()
   if leader_id > mycontext['election'].id:
     mycontext['election'].leaderId=leader_id
     mycontext['election'].leader=leaderhost
@@ -74,11 +74,13 @@ def election_message_handler(message):
 
   if initiator  != get_host():
     mycontext['election'].initiator=initiator
+    mycontext['election'].neighbor.send_msg(mycontext['election'].get_message())
     # send message to neighbor
   else:
     print "finish sending"
     #assign leader based on message
     #no need to send
+  mycontext['lock'].release()
 
 
 def remove_entry(msgid):
