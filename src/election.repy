@@ -60,7 +60,7 @@ def start_election():
 
   mycontext['election'].neighbor.send_ping()
   try:
-    print "Starting election process on IP " + str(ip) + " port " + str(port)
+    print "sending ping for election process on IP " + str(ip) + " port " + str(port)
     #listencommhandle = waitforconn(ip, port, election_handler)
   except Exception, e:
     print "Exception in start_board: %s, %s\n" %(type(e), e)
@@ -68,9 +68,16 @@ def start_election():
 
 def start_sending_election():
   message='Election \n'+mycontext['election'].get_message()
-  print "sending election data to neighbor"
+  print "sending election data to neighbor : " + str(mycontext['election'].get_message())
   mycontext['election'].neighbor.send_msg(message)
 
+def pass_election_data_to_neighbor(initiator,leaderhost,leaderid):
+  message = "Initiator: %s" % initiator + '\n'
+  message = message + "Leader host: %s" % leaderhost + '\n'
+  message = message + "Leader Id: %s" % leaderid
+  message='Election \n'+message
+  print "passing election data to neighbor : " + message
+  mycontext['election'].neighbor.send_msg(message)
 
 
 def election_handler(ip, port, socket, handler, listener):

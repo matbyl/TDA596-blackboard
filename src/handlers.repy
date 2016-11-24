@@ -54,33 +54,45 @@ def add_entry(parameters):
 
 
 def election_message_handler(message):
+  #mycontext['lock'].acquire()
+
+
   print "election hanlder"
   initiator = parse_election_message(message,'Initiator:')
+
   leaderhost=parse_election_message(message,'Leader host:')
   leader_id = parse_election_message(message,'Leader Id:')
 
-  print "initiator :"+initiator
-  print "leaderhost :"+leaderhost
-  print "leader_id :"+leader_id
+  print "\n Parsed election: initiator: " + initiator + " leaderhost: " + leaderhost + " leader_id : " + leader_id + "\n"
+
   # if the id of election message is small than our id , we will assign the election data with our details ,
   # else , assign leader from the message
-  mycontext['lock'].acquire()
+
   if leader_id > mycontext['election'].id:
+    mycontext['lock'].acquire()
     mycontext['election'].leaderId=leader_id
     mycontext['election'].leader=leaderhost
+    mycontext['lock'].release()
   else:
+    mycontext['lock'].acquire()
     mycontext['election'].leaderId =mycontext['election'].id
     mycontext['election'].leader=get_host()
+    mycontext['lock'].release()
 
   if initiator  != get_host():
-    mycontext['election'].initiator=initiator
-    mycontext['election'].neighbor.send_msg(mycontext['election'].get_message())
+    mycontext['lock'].acquire()
+    #mycontext['election'].initiator=initiator
+    mycontext['lock'].release()
+    pass_election_data_to_neighbor(initiator,mycontext['election'].leader,mycontext['election'].leaderId)
     # send message to neighbor
   else:
     print "finish sending"
+    mycontext['leader']=mycontext['election'].leader
     #assign leader based on message
     #no need to send
-  mycontext['lock'].release()
+  #mycontext['lock'].release()
+  print "\n My own id" + str(mycontext['election'].id)
+  print "\n processed election: initiator: " + initiator + " leaderhost: " + str(mycontext['election'].leader) + " leader_id : " + str(mycontext['election'].leaderId) + "\n"
 
 
 def remove_entry(msgid):

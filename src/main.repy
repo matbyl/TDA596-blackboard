@@ -39,12 +39,15 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       c.send_pong()
       print "pong sent to "+str(port)
     elif msgheader.startswith('pong'):
-      print "pong received"
+      print "pong received and send our election data"
       start_sending_election()
     elif msgheader.startswith('Election '):
-      print "election from: "+ str(host)
+      print "\n ============================="
+      print "\n election from: "+ str(host)
+      print "\n ============================="
+
       election_message_handler(msgheader)
-      print "processed election :\n" + mycontext['election'].get_message()
+
 
 
     if query:
@@ -70,6 +73,12 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
           socketobj.send(res)
 
     stopcomm(thiscommhandle)
+    # if leader is done , send the message only to leader
+    # if leader receives the msg. send the msg to others from leader
+    if mycontext['leader']!=None:
+      print "leader is "+str(mycontext['leader'])
+      #mycontext['leader'].send(msgheader)
+
 
     if isHost(host):
       for neighbor in mycontext['neighbors']:
@@ -153,8 +162,6 @@ if callfunc == 'initialize':
   # Start election
   mycontext['electionhandle']=None
   settimer(10, start_election, [])
-
-  print "election data to send: " + mycontext['election'].get_message()
 
 
 
