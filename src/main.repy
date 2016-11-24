@@ -57,7 +57,6 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       if method == 'GET':
           res = get_handler(endpoint)
       elif isHost(mycontext['leader'].get_host()) or host == mycontext['leader'].get_host():
-        
         # React depending on message type: HTTP GET or POST, or some other type of communication.
         if method == 'POST':
           res = post_handler(endpoint, parameters)
@@ -78,7 +77,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
         socketobj.send(res)
         
 
-      stopcomm(thiscommhandle)
+    stopcomm(thiscommhandle)
 
   except Exception, e:
     print "Exception in board: %s, %s\n" %(type(e), e)

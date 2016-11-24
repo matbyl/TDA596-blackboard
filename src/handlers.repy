@@ -98,8 +98,9 @@ def remove_entry(msgid):
   try:
     mycontext['lock'].acquire()
     del mycontext['entries'][msgid]
-    return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
     mycontext['lock'].release()
+    return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
+    
   except Exception:
     raise Exception("Unable to remove entry")
 
@@ -107,7 +108,8 @@ def modify_entry(msgid, msg):
   try:
     mycontext['lock'].acquire()
     mycontext['entries'][msgid] = generate_entry(msgid, msg)
-    return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
     mycontext['lock'].release()
+    return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+   
   except Exception:
     raise Exception("Unable to modify entry")
