@@ -1,0 +1,27 @@
+###############################################################################
+#
+# Name: logicalClock.repy
+#
+# Description: A class to handle the logical clock of a vessel
+#
+###############################################################################
+
+class LogicalClock:
+
+    def __init__ (self):
+        self.timestamp = 0
+
+    def __str__(self):
+        return "Timestamp: " + self.get_timestamp()
+
+    def get_timestamp(self):
+        return str(self.timestamp)
+
+    # Ticks the logical clock
+    def tick(self):
+        self.timestamp = self.timestamp + 1
+
+    # Updates the timestamp to the highest value between message recieved and current logical time
+    def update(self, timestamp):
+        self.timestamp = max(self.timestamp, int(timestamp))
+        self.tick()

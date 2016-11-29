@@ -42,7 +42,6 @@ def add_entry(parameters):
     
     msg = parameters['entry']
     msgid = uniqueid_getid()
-    print msgid
     entry = generate_entry(msgid, msg)
     mycontext['entries'][msgid] = entry
 

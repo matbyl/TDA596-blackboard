@@ -31,7 +31,18 @@ resource connport 63005
 resource messport 63006     # use for getting an NTP update
 resource messport 63006
 resource connport 63006
-
+resource messport 63007     # use for getting an NTP update
+resource messport 63007
+resource connport 63007
+resource messport 63008     # use for getting an NTP update
+resource messport 63008
+resource connport 63008
+resource messport 63009     # use for getting an NTP update
+resource messport 63009
+resource connport 63009
+resource messport 63010     # use for getting an NTP update
+resource messport 63010
+resource connport 63010
 
 call gethostbyname_ex allow
 call sendmess allow 	# the local port type

@@ -8,7 +8,6 @@
 
 include util.repy
 include connection.repy
-include sockettimeout.repy
 
 # ------------------------------------------------------------------------------
 # Retrieves all the neighbors
@@ -37,32 +36,4 @@ def get_all_neighbors():
     if not isHost(host):
       neighbors.append(Connection(ip, port, hostIndex))
 
-    elif neighborIndex == None:
-    # After identifying the host we find the neighbor index
-      neighborIndex=hostIndex
-
-    # Increment host index when a new one has been added to the neighborlist
-    hostIndex += 1
-
-  mycontext['nearestNeighbor']=get_nearest_neighbor(neighborIndex,neighbors)
-
   return neighbors
-
-# ------------------------------------------------------------------------------
-#  Retrieves the nearest available neighbor from the ring, when the neighbor index is
-#  bigger than the available neighbors it will reset the index to zero (ring topology)
-#  #TODO  handling the failure node case
-# ------------------------------------------------------------------------------
-def get_nearest_neighbor(neighborIndex,neighbors):
-  neighbor=None
-
-  if neighborIndex > len(neighbors) - 1:
-    neighborIndex=0
-
-  return neighbors[neighborIndex]
-
-# ------------------------------------------------------------------------------
-#  Retrieves the next nearest available neighbor from the ring
-# ------------------------------------------------------------------------------
-def get_next_nearest_neighbor(nearestNeighbor, neighbors):
-  return neighbors[neighbors.index(nearestNeighbor) + 1 % len(neighbors)]

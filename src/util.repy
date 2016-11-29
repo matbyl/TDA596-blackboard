@@ -57,8 +57,14 @@ def extract_http_request_header_value(headers, header):
     # Strip newline and return only the value
     value = tail.split('\r\n')[0]
 
+    # If no value is found we raise an excetion
+
+    if value == []:
+      raise Exception
+    
     return value
   except Exception:
+    print "Unable to extract" + header + " from http request"
     return False
 
 # ------------------------------------------------------------------------------
@@ -76,21 +82,13 @@ def extract_parameters_from_query(msg):
   return parameters
 
 # ------------------------------------------------------------------------------
-# Utility function to process election message
+# Utility function to add request header
 # ------------------------------------------------------------------------------
-def parse_election_message(message,param):
-  values=message.split('\n')
-  value=None
-  if param=='Initiator:':
-    value=values[1].split(param)[1]
-  elif param=='Leader host:':
-    value=values[2].split(param)[1]
+def add_request_parameter(request, parameter):
+  return request + "&" + parameter
 
-  elif param=='Leader Id:':
-    value=values[3].split(param)[1]
-
-  return value.strip()
-
+def update_request_header(request, header):
+  return 
 
 # ------------------------------------------------------------------------------
 # Utility function to parse an endpoint

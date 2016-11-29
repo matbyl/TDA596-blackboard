@@ -1,8 +1,7 @@
 include api.repy
 include neighbors.repy
-include election.repy
 include handlers.repy
-
+include logicalClock.repy
 
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections in board() function
@@ -19,8 +18,6 @@ def start_board():
     raise
     #pass
 
-
-
 # ------------------------------------------------------------------------------    
 # Called when an incoming message is received. 
 # --> Important starting point
@@ -30,54 +27,45 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     msgheader = socketobj.recv(1024)
     query = extract_http_request_contents(msgheader)
     host = extract_http_request_header_value(msgheader, "host")
+    
+    if query:
+      parameters = extract_parameters_from_query(query)
+      if not isHost(host):
+    
+    res = ''
+    method = msgheader.split(' ')[0]
+    endpoint = msgheader.split(' ')[1]
 
-    if msgheader.startswith('ping'):
-      print "ping received"
-      ip = host.split(':')[0]
-      port = host.split(':')[1]
-      c = Connection(ip, port, 0)
-      c.send_pong()
-      print "pong sent to "+str(port)
-    elif msgheader.startswith('pong'):
-      print "pong received"
-      start_sending_election()
-    elif msgheader.startswith('Election '):
-      election_message_handler(msgheader)
-    elif msgheader.startswith('Update'):
-      mycontext['entries'] = ms
-    elif mycontext['leader'] != None:
-      
-      if query:
-        parameters = extract_parameters_from_query(query)
-      
-      res = ''
-      method = msgheader.split(' ')[0]
-      endpoint = msgheader.split(' ')[1]
+    if method == 'GET':
+      if endpoint != "/favicon.ico":
+        res = get_handler(endpoint)
 
-      if method == 'GET':
-          res = get_handler(endpoint)
-      elif isHost(mycontext['leader'].get_host()) or host == mycontext['leader'].get_host():
-        # React depending on message type: HTTP GET or POST, or some other type of communication.
-        if method == 'POST':
-          res = post_handler(endpoint, parameters)
-        elif method == 'PUT':
-          res = mycontext['api'].put(endpoint, parameters)
-        elif method == 'DELETE':
-          res = mycontext['api'].delete(endpoint)
-        
-        msgheader = msgheader.replace(host, get_host())
+    # React depending on message type: HTTP GET or POST, or some other type of communication.
+    elif method == 'POST':
 
-        if isHost(mycontext['leader'].get_host()):
-          for neighbor in mycontext['neighbors']:
-            neighbor.send_msg(msgheader)
+      # If the message is not from the host we need to accound for the timestamp of the message recieved
+      if isHost(host):
+        mycontext['logicalClock'].tick()
       else:
-        mycontext['leader'].send_msg(msgheader) 
+        # print mycontext['logicalClock']
+        res = post_handler(endpoint, parameters)
 
-      if res:
-        socketobj.send(res)
-        
-
+    elif method == 'PUT':
+      res = mycontext['api'].put(endpoint, parameters)
+    elif method == 'DELETE':
+      res = mycontext['api'].delete(endpoint)
+    
+    if res:
+      socketobj.send(res)
+  
     stopcomm(thiscommhandle)
+
+    if isHost(host):
+      msgheader = add_request_parameter(msgheader, "timestamp=" + mycontext['logicalClock'].get_timestamp())
+
+      for neighbor in mycontext['neighbors']:
+        neighbor.send_msg(msgheader)
+
 
   except Exception, e:
     print "Exception in board: %s, %s\n" %(type(e), e)
@@ -105,7 +93,7 @@ if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
   mycontext['lock'] = getlock()
-  mycontext['timer'] = None
+  mycontext['logicalClock'] = LogicalClock() 
 
   api = Api()
 
@@ -145,19 +133,8 @@ if callfunc == 'initialize':
   mycontext['ip'] = ip
 
   # Nearest neighbor of the current host
-  mycontext['nearestNeighbor'] = None
-  # NOTE: nearestNeighbor will also be added when all neighbors are added
   mycontext['neighbors'] = get_all_neighbors()
-  mycontext['leader']=None
-  mycontext['election'] = Election(int(randomfloat()*1000), get_host(), mycontext['nearestNeighbor'])
-  print "Neighbor" + str(mycontext['nearestNeighbor'])
-
-  # Start election
-  mycontext['electionhandle']=None
-  settimer(10, start_election, [])
-
-  print "\nElection data to send: \n" + mycontext['election'].get_message() + "\n"
-
+  
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()
   mycontext['boardcontents_template'] = open("boardcontents_template.html").read()
