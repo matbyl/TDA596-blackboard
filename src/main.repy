@@ -2,6 +2,7 @@ include api.repy
 include neighbors.repy
 include handlers.repy
 include logicalClock.repy
+include httprequest.repy
 
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections in board() function
@@ -25,17 +26,21 @@ def start_board():
 def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
   try:
     msgheader = socketobj.recv(1024)
-    query = extract_http_request_contents(msgheader)
-    host = extract_http_request_header_value(msgheader, "host")
-    
-    if query:
-      parameters = extract_parameters_from_query(query)
-      if not isHost(host):
-    
-    res = ''
-    method = msgheader.split(' ')[0]
-    endpoint = msgheader.split(' ')[1]
 
+    
+    print msgheader
+
+    httpRequest = HttpRequest()
+    httpRequest.parse(msgheader)
+    
+    parameters = httpRequest.get_parameters()
+    method = httpRequest.method
+    endpoint = httpRequest.uri
+    host = httpRequest.get_host()
+
+
+    res = ''
+  
     if method == 'GET':
       if endpoint != "/favicon.ico":
         res = get_handler(endpoint)
@@ -47,8 +52,9 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       if isHost(host):
         mycontext['logicalClock'].tick()
       else:
-        # print mycontext['logicalClock']
-        res = post_handler(endpoint, parameters)
+        print mycontext['logicalClock']
+
+      res = post_handler(endpoint, parameters)
 
     elif method == 'PUT':
       res = mycontext['api'].put(endpoint, parameters)
@@ -61,10 +67,8 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     stopcomm(thiscommhandle)
 
     if isHost(host):
-      msgheader = add_request_parameter(msgheader, "timestamp=" + mycontext['logicalClock'].get_timestamp())
-
       for neighbor in mycontext['neighbors']:
-        neighbor.send_msg(msgheader)
+        neighbor.send_msg(httpRequest.get_request())
 
 
   except Exception, e:
