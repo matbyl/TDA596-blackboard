@@ -61,8 +61,29 @@ class HttpRequest:
       if len(parameter)>1:
         self.parameters[parameter[0]] = parameter[1]
 
+  def get_info(self):
+    msg = "\nMethod: " + self.method
+    msg += "\nUri: " + self.uri
+    msg += "\nType: " + self.type
+
+    return msg 
+
   def get_parameters(self):
     return self.parameters
+
+  def get_parameter(self, key):
+    try:
+      if key in self.parameters:
+        return self.parameters[key]
+    except Exception, e:  
+      raise "Exception in httprequest: Parameter %s was not found" % key
+
+  def get_parameter_string(self):
+    msg = ""
+    for key, value in self.parameters.iteritems():
+      msg += "%s=%s&" % (key,value)
+      
+    return msg
 
   def get_header(self, header):
     return self.headers[header]
@@ -76,6 +97,9 @@ class HttpRequest:
   def set_content_length(self, length):
     self.headers["Content-Length"] = length
 
+  def update_content_length(self):
+    self.set_content_length(len(self.get_parameter_string()))
+
   def get_request(self):
     request = ""
 		
@@ -88,13 +112,15 @@ class HttpRequest:
     if self.parameters:
       request += "\r\n"
 
-      for key, value in self.parameters.iteritems():
-        request += "%s=%s&" % (key,value)
-
+      request += self.get_parameter_string()
       # Not the most beautiful way to avoid having an extra '&' in the message body, but it works
       request = request[:-1]
 
     return request
 
   def add_parameter(self, key, value):
-	  self.parameters[key] = value
+    self.parameters[key] = value
+    self.update_content_length()
+
+  def add_header(self, key, value):
+    self.headers[key] = value

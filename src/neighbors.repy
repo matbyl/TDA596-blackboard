@@ -15,7 +15,6 @@ include connection.repy
 def get_all_neighbors():
   f = open('neighborlist.txt')
 
-  hostIndex = 0
   port =  mycontext['port']
 
   neighbors = []
@@ -34,6 +33,6 @@ def get_all_neighbors():
 
     # Do not include current host (or int(data[1]) != mycontext['port'])
     if not isHost(host):
-      neighbors.append(Connection(ip, port, hostIndex))
+      neighbors.append(Connection(ip, port))
 
   return neighbors

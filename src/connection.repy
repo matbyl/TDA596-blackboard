@@ -10,10 +10,9 @@ include sockettimeout.repy
 
 class Connection:
 
-  def __init__(self, ip, port, hostindex):
+  def __init__(self, ip, port):
     self.ip = str(ip)
     self.port = int(port)
-    self.host_index = int(hostindex)
 
   def __str__(self):
     return "\nIP: " + str(self.ip) + "\nPort: " + str(self.port) + "\n"

@@ -1,7 +1,7 @@
 include api.repy
 include neighbors.repy
 include handlers.repy
-include logicalClock.repy
+include vectorClock.repy
 include httprequest.repy
 
 # ------------------------------------------------------------------------------
@@ -27,17 +27,15 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
   try:
     msgheader = socketobj.recv(1024)
 
-    
-    print msgheader
-
     httpRequest = HttpRequest()
     httpRequest.parse(msgheader)
     
+    # print httpRequest.get_info()
+
     parameters = httpRequest.get_parameters()
     method = httpRequest.method
     endpoint = httpRequest.uri
     host = httpRequest.get_host()
-
 
     res = ''
   
@@ -48,11 +46,13 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     elif method == 'POST':
 
-      # If the message is not from the host we need to accound for the timestamp of the message recieved
+      # If the message is not from the host we need to account for the timestamp of the message recieved
       if isHost(host):
-        mycontext['logicalClock'].tick()
+        mycontext['clock'].tick()
+        print mycontext['clock']
       else:
-        print mycontext['logicalClock']
+        mycontext['clock'].update(host, httpRequest.get_header('Host-Timestamp'))
+        print mycontext['clock']
 
       res = post_handler(endpoint, parameters)
 
@@ -66,15 +66,15 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
   
     stopcomm(thiscommhandle)
 
-    if isHost(host):
-      for neighbor in mycontext['neighbors']:
-        neighbor.send_msg(httpRequest.get_request())
+    if isHost(host) and method == 'POST':
+      
+      httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp(host))
 
+      for neighbor in mycontext['neighbors']:
+        neighbor.send_msg(httpRequest.get_request())    
 
   except Exception, e:
-    print "Exception in board: %s, %s\n" %(type(e), e)
-    print "message of exception :"+str(e)
-
+    print "\nException in board: %s, %s" %(type(e), e)
 
 # ------------------------------------------------------------------------------
 # Outputs the blackboard html 
@@ -96,8 +96,7 @@ def generate_html_page():
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
-  mycontext['lock'] = getlock()
-  mycontext['logicalClock'] = LogicalClock() 
+  mycontext['lock'] = getlock() 
 
   api = Api()
 
@@ -135,10 +134,18 @@ if callfunc == 'initialize':
   #Initialize Port and IP
   mycontext['port'] = port
   mycontext['ip'] = ip
+  mycontext['connection'] = Connection(ip, port)
+
 
   # Nearest neighbor of the current host
   mycontext['neighbors'] = get_all_neighbors()
-  
+
+  # we need the host before we initialize the vectorclock
+  mycontext['clock'] = VectorClock(mycontext['connection'].get_host())
+  # Add all neighbors to the vector clock
+  for neighbor in mycontext['neighbors']:
+    mycontext['clock'].add_clock(neighbor.get_host())
+
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()
   mycontext['boardcontents_template'] = open("boardcontents_template.html").read()
