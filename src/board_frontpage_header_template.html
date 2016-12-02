@@ -17,7 +17,7 @@ var page_reload_count = 0;
 
 function update_contents(){
     page_reload_count += 1;
-    $("#boardcontents_placeholder").load("/board #boardcontents_placeholder", function (data, status) {
+    $("#boardcontents-wrapper").load("/board #boardcontents_placeholder", function (data, status) {
         //alert("Data: " + data + "\nStatus: " + status);
         $("#boardcontents_status_placeholder").text(page_reload_count + ": " + status);
     });
@@ -43,6 +43,23 @@ $(document).ready(function () {
 </script>
 <!-- this place defines the style (format) for different elements of the page -->
 <style>
+
+body {
+    font-family: helvetica;
+}
+
+#board-content {
+    float:left;
+    width: 50%;
+    height: 100%;
+}
+
+#request-information {
+    float: right;
+    width: 40%;
+    height: 100%;
+}
+
 .status {
     color: red;
     font-size: 75%; 
@@ -73,42 +90,84 @@ $(document).ready(function () {
 }
 
 footer {
-    margin: 10px 0px 0px 0px;
+    position: absolute;
+    right: 10px;
+    bottom: 0;
     font-size: 75%; 
     color: gray;
 }
 
+#boardcontents-wrapper {
+    overflow-y: auto;
+    height: 180px;
+}
+
 #boardcontents_placeholder {
-    margin: 10px 0px 0px 0px;      
-    border: 1px dotted green;
+    margin: 10px 0px 0px 0px;    
 }
 
 #boardtitle_placeholder {
-    font-size: 125%;
+    font-size: 75%;
     font-weight: bold; 
 }
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+ 
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    border-radius: 10px;
+}
+ 
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: grey;
+}
+
+.btn-red {
+    background: #d6553e;
+    -webkit-border-radius: 2;
+    -moz-border-radius: 2;
+    border-radius: 2px;
+    border-style: none;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 5px 5px 5px 5px;
+}
+
+.btn-red:hover {
+    background: #852c1c;
+    text-decoration: none;
+}
+
 </style>
     <title>Distributed board - TDA596 (Chalmers)</title>
 </head>
 <body>
-    <!-- this place will show a count down for the automatic reload of the board contents, downloaded periodically from the server using the javascript function reload_countdown. -->
-    <div id="countdown_placeholder"></div>
-    <!-- this place will show the actual contents of the blackboard. 
-    It will be reloaded automatically from the server -->
-    <!-- This place shows the status of the auto-reload. 
-    An error shown here means the server is not responding -->
-    <div id="boardcontents_status_placeholder">0: success</div>
+    <div id="request-information">
+        <h3>Request Information</h3>
+        <!-- this place will show a count down for the automatic reload of the board contents, downloaded periodically from the server using the javascript function reload_countdown. -->
+        <div id="countdown_placeholder"></div>
+        <!-- this place will show the actual contents of the blackboard. 
+        It will be reloaded automatically from the server -->
+        <!-- This place shows the status of the auto-reload. 
+        An error shown here means the server is not responding -->
+        <div id="boardcontents_status_placeholder">0: success</div>
 
-    <!-- This is a target for forms to prevent reloading the page on form submit. We handle the update in the script instead. USE style="display:none" to hide it -->   
-    <iframe name="noreload-form-target" width="90%" height="50" src="about:blank" frameborder="0" scrolling="yes" resizable seamless></iframe>
-
-    <!-- This place shows the text box used to enter data to the blackboard by posting a request to the server -->
-    <div id="board_form_placeholder">
-        <h3>Submit to board</h3>
-        <form id="usrform" target="noreload-form-target">
-            <input type="text" name="entry" size="100%" autofocus required />
-            <input type="submit" formmethod="post" formaction="entries" value="Submit to board"/>
-        </form>
+        <!-- This is a target for forms to prevent reloading the page on form submit. We handle the update in the script instead. USE style="display:none" to hide it -->   
+        <iframe name="noreload-form-target" width="90%" src="about:blank" frameborder="0" scrolling="yes" resizable seamless></iframe>
     </div>
 
-    <!-- The board contents come here -->  
+    <div id="board-content">
+
+        <!-- This place shows the text box used to enter data to the blackboard by posting a request to the server -->
+        <div id="board_form_placeholder">
+            <h3>Blackboard</h3>
+            <form id="usrform" target="noreload-form-target">
+                <input type="text" name="entry" size="25%%" autofocus required />
+                <input type="submit" formmethod="post" formaction="entries" value="Submit"/>
+            </form>
+        </div>
+
+        <!-- The board contents come here -->

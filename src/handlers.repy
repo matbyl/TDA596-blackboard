@@ -21,6 +21,7 @@ def post_handler(endpoint, parameters):
     if int(parameters['delete']) == 1:
       return mycontext['api'].delete(endpoint)
     else:
+      print parameters
       return mycontext['api'].put(endpoint, parameters)
   else:
     return mycontext['api'].post(endpoint, parameters)
@@ -38,6 +39,7 @@ def get_board():
 # ------------------------------------------------------------------------------
 def add_entry(parameters):
   try:
+    print parameters
     mycontext['lock'].acquire()
     
     msg = parameters['entry']
@@ -52,46 +54,6 @@ def add_entry(parameters):
   except Exception:
     raise Exception("Unable to handle add_entry request")
 
-
-def election_message_handler(message):
-  mycontext['lock'].acquire()
-  
-  initiator = parse_election_message(message,'Initiator:')
-  leader_host = parse_election_message(message,'Leader host:')
-  leader_id = parse_election_message(message,'Leader Id:')
-
-
-  # if the id of election message is small than our id , we will assign the election data with our details ,
-  # else , assign leader from the message
-  if int(leader_id) < mycontext['election'].id:
-    leader_id = str(mycontext['election'].id)
-    leader_host = get_host()
-
-  if initiator != get_host():
-    print "\n===========================\nForwarding message!\n===========================\n"
-    message = create_election_message(initiator, leader_host, leader_id)
-    print message + "\n\n"
-
-    mycontext['election'].neighbor.send_msg(message)
-    # send message to neighbor
-  else:
-    print "\n===========================\nDeclared a new leader\nIP:" + leader_host + "\nID:" + leader_id + " \n===========================\n"
-    ip = leader_host.split(":")[0].strip()
-    port = leader_host.split(":")[1].strip()
-
-    mycontext['leader'] = Connection(ip, port, 0)
-    mycontext['leader'].leader = leader_host
-    #assign leader based on message
-    #no need to send
-
-  mycontext['lock'].release()
-
-
-def create_election_message( initiator, leader_host, leader_id):
-  message = "Election \nInitiator: " + initiator + "\n"
-  message += "Leader host: " + leader_host + "\n"
-  message += "Leader Id: " + leader_id + "\n"
-  return message
 
 def remove_entry(msgid):
   try:

@@ -30,7 +30,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     httpRequest = HttpRequest()
     httpRequest.parse(msgheader)
     
-    # print httpRequest.get_info()
+    print httpRequest.get_info()
 
     parameters = httpRequest.get_parameters()
     method = httpRequest.method
@@ -82,7 +82,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 def generate_html_page():
 
   # dynamic title showing Ip address, port and up time.
-  title='Sample board @ %s:%d. Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
+  title='Host: %s:%d <br /> Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
   content = mycontext['boardcontents_template'] %( title, "".join(mycontext['entries'].values()))
   fullpage_h = mycontext['frontpage_header_template'] + content
   fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']

@@ -58,8 +58,8 @@ class HttpRequest:
       for raw_parameter in raw_parameters:
         parameter = raw_parameter.split('=')
               
-      if len(parameter)>1:
-        self.parameters[parameter[0]] = parameter[1]
+        if len(parameter)>1:
+          self.parameters[parameter[0]] = parameter[1]
 
   def get_info(self):
     msg = "\nMethod: " + self.method
