@@ -32,16 +32,14 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     
     print httpRequest.get_info()
 
-    parameters = httpRequest.get_parameters()
     method = httpRequest.method
     endpoint = httpRequest.uri
     host = httpRequest.get_host()
-
     res = ''
   
     if method == 'GET':
-      if endpoint != "/favicon.ico":
-        res = get_handler(endpoint)
+        if endpoint != "/favicon.ico":
+          res = get_handler(endpoint)
 
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     elif method == 'POST':
@@ -54,10 +52,10 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
         mycontext['clock'].update(host, httpRequest.get_header('Host-Timestamp'))
         print mycontext['clock']
 
-      res = post_handler(endpoint, parameters)
+      res = post_handler(endpoint, httpRequest)
 
     elif method == 'PUT':
-      res = mycontext['api'].put(endpoint, parameters)
+      res = mycontext['api'].put(endpoint, httpRequest)
     elif method == 'DELETE':
       res = mycontext['api'].delete(endpoint)
     
@@ -67,7 +65,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     stopcomm(thiscommhandle)
 
     if isHost(host) and method == 'POST':
-      
+
       httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp(host))
 
       for neighbor in mycontext['neighbors']:

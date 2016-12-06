@@ -16,15 +16,17 @@ def get_handler(endpoint):
 
 
 
-def post_handler(endpoint, parameters):
+def post_handler(endpoint, httpRequest):
+  parameters = httpRequest.get_parameters()
+
   if parameters.has_key('delete'):
     if int(parameters['delete']) == 1:
       return mycontext['api'].delete(endpoint)
     else:
       print parameters
-      return mycontext['api'].put(endpoint, parameters)
+      return mycontext['api'].put(endpoint, httpRequest)
   else:
-    return mycontext['api'].post(endpoint, parameters)
+    return mycontext['api'].post(endpoint, httpRequest)
 
 # ------------------------------------------------------------------------------
 # Handles initial GET request from browser, outputs HTML string and closes socket.
@@ -37,9 +39,9 @@ def get_board():
 # ------------------------------------------------------------------------------
 # Creates and adds a new entry to the global variable entries
 # ------------------------------------------------------------------------------
-def add_entry(parameters):
+def add_entry(httpRequest):
   try:
-    print parameters
+    parameters = httpRequest.get_parameters()
     mycontext['lock'].acquire()
     
     msg = parameters['entry']
@@ -65,8 +67,11 @@ def remove_entry(msgid):
   except Exception:
     raise Exception("Unable to remove entry")
 
-def modify_entry(msgid, msg):
+def modify_entry(msgid, httpRequest):
   try:
+    parameters = httpRequest.get_parameters()
+    
+    msg = parameters['entry']
     mycontext['lock'].acquire()
     mycontext['entries'][msgid] = generate_entry(msgid, msg)
     mycontext['lock'].release()

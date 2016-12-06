@@ -9,8 +9,8 @@ class Api:
   def get(self, endpoint):
     return self.resources[endpoint].handle('GET')
 
-  def post(self, endpoint, args):
-    return self.resources[endpoint].handle('POST', args)
+  def post(self, endpoint, httpRequest):
+    return self.resources[endpoint].handle('POST', httpRequest)
 
   def delete(self, endpoint):
     endpoint_parts = endpoint.split('/')
@@ -19,13 +19,12 @@ class Api:
 
     return self.resources[resource].handle('DELETE', msgid)
 
-  def put(self, endpoint, args):
+  def put(self, endpoint, httpRequest):
     endpoint_parts = endpoint.split('/')
     resource = '/' + endpoint_parts[1]
     msgid = int(endpoint_parts[2])
-    msg = args['entry']
 
-    return self.resources[resource].handle('PUT', msgid, msg)
+    return self.resources[resource].handle('PUT', msgid, httpRequest)
 
   def add_resource(self, handlers, endpoints, collection=False):
     resource = Resource(handlers, collection)
