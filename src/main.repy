@@ -60,6 +60,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       res = mycontext['api'].delete(endpoint)
     
     if res:
+      print "FINAL RES: " + res
       socketobj.send(res)
   
     stopcomm(thiscommhandle)

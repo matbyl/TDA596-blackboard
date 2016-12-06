@@ -70,7 +70,7 @@ def remove_entry(msgid):
 def modify_entry(msgid, httpRequest):
   try:
     parameters = httpRequest.get_parameters()
-    
+
     msg = parameters['entry']
     mycontext['lock'].acquire()
     mycontext['entries'][msgid] = generate_entry(msgid, msg)

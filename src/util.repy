@@ -12,8 +12,11 @@
 # Wrap into HTTP headers
 # ------------------------------------------------------------------------------
 def make_http_response(status, status_text, htmlresponse=''):
-  response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html\r\nContent-length: %i\r\n\r\n%s"
-  return response_template % (status, status_text, len(htmlresponse), htmlresponse)
+  response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html\r\nContent-length: %s\r\n\r\n%s"
+  
+  res = response_template % (status, status_text, str(len(htmlresponse)), htmlresponse)
+  print res
+  return res
 
 # ------------------------------------------------------------------------------
 #  Creates a 404 response to display in HTTP request
