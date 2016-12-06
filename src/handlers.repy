@@ -2,6 +2,7 @@
 
 include util.repy
 include uniqueid.repy
+include entry.repy
 
 def get_handler(endpoint):
     # if any thread has entered the election , then do nothing
@@ -23,7 +24,6 @@ def post_handler(endpoint, httpRequest):
     if int(parameters['delete']) == 1:
       return mycontext['api'].delete(endpoint)
     else:
-      print parameters
       return mycontext['api'].put(endpoint, httpRequest)
   else:
     return mycontext['api'].post(endpoint, httpRequest)
@@ -44,11 +44,12 @@ def add_entry(httpRequest):
     parameters = httpRequest.get_parameters()
     mycontext['lock'].acquire()
     
+    print parameters
+    msgid =  int(parameters['id'])
     msg = parameters['entry']
-    msgid = uniqueid_getid()
     entry = generate_entry(msgid, msg)
-    mycontext['entries'][msgid] = entry
-
+    timestamp = mycontext['clock'].get_timestamp(httpRequest.get_host())
+    mycontext['entries'][msgid] = Entry(msgid, entry, timestamp, httpRequest.get_host())
     mycontext['lock'].release()
 
     return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
@@ -73,7 +74,7 @@ def modify_entry(msgid, httpRequest):
 
     msg = parameters['entry']
     mycontext['lock'].acquire()
-    mycontext['entries'][msgid] = generate_entry(msgid, msg)
+    mycontext['entries'][msgid].set_html(msg)
     mycontext['lock'].release()
     return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
    

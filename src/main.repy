@@ -35,6 +35,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     method = httpRequest.method
     endpoint = httpRequest.uri
     host = httpRequest.get_host()
+    parameters = httpRequest.get_parameters()
     res = ''
   
     if method == 'GET':
@@ -51,7 +52,12 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       else:
         mycontext['clock'].update(host, httpRequest.get_header('Host-Timestamp'))
         print mycontext['clock']
-
+      
+      # If there is not id for the entry yet we generate a new one
+      # note that this also gets passed to the neighbors laters
+      if not 'id' in parameters:
+        httpRequest.add_parameter('id', uniqueid_getid())
+      
       res = post_handler(endpoint, httpRequest)
 
     elif method == 'PUT':
@@ -60,8 +66,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       res = mycontext['api'].delete(endpoint)
     
     if res:
-      print "FINAL RES: " + res
-      socketobj.send(res)
+      print socketobj.send(res)
   
     stopcomm(thiscommhandle)
 
@@ -74,20 +79,6 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 
   except Exception, e:
     print "\nException in board: %s, %s" %(type(e), e)
-
-# ------------------------------------------------------------------------------
-# Outputs the blackboard html 
-# ------------------------------------------------------------------------------   
-def generate_html_page():
-
-  # dynamic title showing Ip address, port and up time.
-  title='Host: %s:%d <br /> Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
-  content = mycontext['boardcontents_template'] %( title, "".join(mycontext['entries'].values()))
-  fullpage_h = mycontext['frontpage_header_template'] + content
-  fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']
-  #print entries, content, fullpage
-  fullpage = ''.join(fullpage.split('\t'))
-  return ''.join(fullpage.split('\n'))
 
 # ------------------------------------------------------------------------------    
 # Main entry point of the program. Initalizes global variables in mycontext

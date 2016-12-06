@@ -1,0 +1,30 @@
+"""
+
+ Name: entry.repy
+
+ Description: Entry on the blackboard contains a message and a vector with
+ timestamps.
+
+"""
+
+include util.repy
+
+class Entry:
+
+    def __init__(self, msgid, html, timestamp, host):
+        self.id = msgid
+        self.html = html
+        self.timestamp = timestamp
+        self.host = host
+
+    def get_timestamp(self):
+        return self.timestamp
+
+    def get_host(self):
+        return self.host
+
+    def get_html(self):
+        return self.html
+
+    def set_html(self, msg):
+        self.html = generate_entry(self.id, msg)

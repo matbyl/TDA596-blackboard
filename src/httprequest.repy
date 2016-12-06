@@ -83,7 +83,7 @@ class HttpRequest:
     for key, value in self.parameters.iteritems():
       msg += "%s=%s&" % (key,value)
       
-    return msg
+    return msg[:-1]
 
   def get_header(self, header):
     return self.headers[header]
@@ -112,10 +112,8 @@ class HttpRequest:
     if self.parameters:
       request += "\r\n"
 
-      request += self.get_parameter_string()
-      # Not the most beautiful way to avoid having an extra '&' in the message body, but it works
-      request = request[:-1]
-
+      request += self.get_parameter_string().strip()
+      
     return request
 
   def add_parameter(self, key, value):

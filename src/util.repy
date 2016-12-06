@@ -13,9 +13,7 @@
 # ------------------------------------------------------------------------------
 def make_http_response(status, status_text, htmlresponse=''):
   response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html;charset=UTF-8\r\nContent-length: %s\r\n\r\n%s"
-  
   res = response_template % (status, status_text, str(len(htmlresponse)), htmlresponse)
-  print res
   return res
 
 # ------------------------------------------------------------------------------
@@ -26,6 +24,7 @@ def make_404_response(msgheader):
   template = '<html><head><style>.status {color: red;font-size: 75%%;}</style></head><body><pre><samp class="status">%s</samp></pre></body><html>'
   htmlresponse = template % ("404 Not Found\n" + msgheader)
   res = make_http_response(404, 'Not Found', htmlresponse)
+
 
 # ------------------------------------------------------------------------------
 #  Creates a 404 response to display in HTTP request
@@ -84,14 +83,44 @@ def extract_parameters_from_query(msg):
       parameters[pp[0]] = pp[1]
   return parameters
 
-# ------------------------------------------------------------------------------
-# Utility function to add request header
-# ------------------------------------------------------------------------------
-def add_request_parameter(request, parameter):
-  return request + "&" + parameter
 
-def update_request_header(request, header):
-  return 
+# ------------------------------------------------------------------------------
+# Outputs the blackboard html 
+# ------------------------------------------------------------------------------   
+def generate_html_page():
+
+  # dynamic title showing Ip address, port and up time.
+  title='Host: %s:%d <br /> Up time: %d' %( str(mycontext['ip']), mycontext['port'], int(getruntime()) )
+  content = mycontext['boardcontents_template'] %( title, "".join(generate_entries()))
+  fullpage_h = mycontext['frontpage_header_template'] + content
+  fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']
+  #print entries, content, fullpage
+  fullpage = ''.join(fullpage.split('\t'))
+  return ''.join(fullpage.split('\n'))
+
+# ------------------------------------------------------------------------------
+# Retrieves all entries in a sorted fashion according to their given timestamp
+# ------------------------------------------------------------------------------  
+def generate_entries():
+  entry_objects = mycontext['entries'].values()
+  entry_objects.sort(compare_entries)
+  entries = map(get_entry_html, entry_objects)
+  return entries
+
+# ------------------------------------------------------------------------------
+# Helper function to map entry objects to a list with corresponding html-items
+# ------------------------------------------------------------------------------  
+def get_entry_html(entry):
+  return entry.get_html()
+
+# ------------------------------------------------------------------------------
+# Compares two entries timestamps, in the case that they are equal the host that
+# generated the entry is compared instead
+# ------------------------------------------------------------------------------  
+def compare_entries(e1, e2):
+  if e1.get_timestamp() == e2.get_timestamp():
+    return e1.get_host() > e2.get_host()
+  return e1.get_timestamp() < e2.get_timestamp()
 
 # ------------------------------------------------------------------------------
 # Utility function to parse an endpoint
