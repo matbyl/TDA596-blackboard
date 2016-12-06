@@ -86,7 +86,8 @@ def generate_html_page():
   fullpage_h = mycontext['frontpage_header_template'] + content
   fullpage = fullpage_h + mycontext['frontpage_footer_template'] % mycontext['authors']
   #print entries, content, fullpage
-  return fullpage
+  fullpage = ''.join(fullpage.split('\t'))
+  return ''.join(fullpage.split('\n'))
 
 # ------------------------------------------------------------------------------    
 # Main entry point of the program. Initalizes global variables in mycontext
