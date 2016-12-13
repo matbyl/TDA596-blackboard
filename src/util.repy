@@ -156,7 +156,17 @@ def check_history():
             mycontext['connection'].send_msg(httpRequest.get_request())
 
     for key in oldHistory:
-        del mycontext['history'][key]
+
+        # Handle this as a critical section to prevent multiple threads
+        # attempting to clear history at the same time
+        mycontext['lock'].acquire();
+        if key in mycontext['history']:
+            del mycontext['history'][key]
+        mycontext['lock'].release();
 
 def is_old_history(timestamp, lifespan):
     return int(timestamp) < int(mycontext['clock'].get_timestamp()) - lifespan
+
+# Check to see if a write happened after the current timestamp on the entry
+def is_invalid_write(c_timestamp, w_timestamp):
+    return w_timestamp < c_timestamp

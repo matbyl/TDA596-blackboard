@@ -20,7 +20,7 @@ def post_handler(endpoint, httpRequest):
 
   if parameters.has_key('delete'):
     if int(parameters['delete']) == 1:
-      return mycontext['api'].delete(endpoint)
+      return mycontext['api'].delete(endpoint, httpRequest)
     else:
       return mycontext['api'].put(endpoint, httpRequest)
   else:
@@ -61,9 +61,17 @@ def add_entry(httpRequest):
     print "Unable to handle add_entry request %s, %s" %(type(e), e)
 
 
-def remove_entry(msgid):
+def remove_entry(msgid, httpRequest):
   try:
+    parameters = httpRequest.get_parameters()
+
     if msgid in mycontext['entries']:
+
+        # If the current request is historical we need to make sure that
+        # deletion happened after the entry was created
+        if 'history' in parameters and is_invalid_write(mycontext['entries'][msgid].get_timestamp(), parameters['history']):
+            raise Exception();
+
         mycontext['lock'].acquire()
         del mycontext['entries'][msgid]
         mycontext['lock'].release()
@@ -81,9 +89,15 @@ def modify_entry(msgid, httpRequest):
     msg = parameters['entry']
 
     if msgid in mycontext['entries']:
+
+        # If history is older then the current update value do not modify the entry
+        if 'history' in parameters and is_invalid_write(mycontext['entries'][msgid].last_update(), parameters['history']):
+            raise Exception()
+
         mycontext['lock'].acquire()
-        mycontext['entries'][msgid].set_html(msg)
+        mycontext['entries'][msgid].set_html(msg, mycontext['clock'].get_timestamp())
         mycontext['lock'].release()
+
         return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
     else:
         return make_http_response(404, 'Not Found');

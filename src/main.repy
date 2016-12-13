@@ -25,6 +25,7 @@ def start_board():
 # ------------------------------------------------------------------------------
 def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
   try:
+    SOCKET_MAX_SIZE = 10000
     msgheader = socketobj.recv(1024)
 
     httpRequest = HttpRequest()
@@ -65,10 +66,11 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     elif method == 'PUT':
       res, status = mycontext['api'].put(endpoint, httpRequest)
     elif method == 'DELETE':
-      res, status = mycontext['api'].delete(endpoint)
+      res, status = mycontext['api'].delete(endpoint, httpRequest)
 
-    if res:
+    if res and len(res) < SOCKET_MAX_SIZE:
       print socketobj.send(res)
+
       # If new a event occurs we need to make a check with the history
       if method in write_methods and not 'history' in parameters:
           settimer(2, check_history, ())

@@ -12,12 +12,12 @@ class Api:
   def post(self, endpoint, httpRequest):
     return self.resources[endpoint].handle('POST', httpRequest)
 
-  def delete(self, endpoint):
+  def delete(self, endpoint, httpRequest):
     endpoint_parts = endpoint.split('/')
     resource = '/' + endpoint_parts[1]
     msgid = int(endpoint_parts[2])
 
-    return self.resources[resource].handle('DELETE', msgid)
+    return self.resources[resource].handle('DELETE', msgid, httpRequest)
 
   def put(self, endpoint, httpRequest):
     endpoint_parts = endpoint.split('/')
