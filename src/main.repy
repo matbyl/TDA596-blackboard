@@ -72,7 +72,8 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       print socketobj.send(res)
 
       # If new a event occurs we need to make a check with the history
-      if method in write_methods and not 'history' in parameters:
+      if not mycontext['checkingHistory'] and method in write_methods and not 'history' in parameters:
+          mycontext['checkingHistory'] = True
           settimer(2, check_history, ())
 
     stopcomm(thiscommhandle)
@@ -109,6 +110,7 @@ if callfunc == 'initialize':
   mycontext['entries'] = {}
   # dictionary that contains history in the case of a request failing
   mycontext['history'] = {}
+  mycontext['checkingHistory'] = False
   mycontext['lock'] = getlock()
 
   api = Api()

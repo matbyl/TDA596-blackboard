@@ -25,7 +25,6 @@ def make_404_response(msgheader):
   htmlresponse = template % ("404 Not Found\n" + msgheader)
   res = make_http_response(404, 'Not Found', htmlresponse)
 
-
 # ------------------------------------------------------------------------------
 #  Creates a 404 response to display in HTTP request
 # ------------------------------------------------------------------------------
@@ -163,6 +162,8 @@ def check_history():
         if key in mycontext['history']:
             del mycontext['history'][key]
         mycontext['lock'].release();
+
+    mycontext['checkingHistory'] = False
 
 def is_old_history(timestamp, lifespan):
     return int(timestamp) < int(mycontext['clock'].get_timestamp()) - lifespan
