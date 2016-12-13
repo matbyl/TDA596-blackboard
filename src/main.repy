@@ -32,6 +32,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 
     print httpRequest.get_info()
 
+    write_methods = ['POST', 'PUT', 'DELETE']
     method = httpRequest.method
     endpoint = httpRequest.uri
     host = httpRequest.get_host()
@@ -68,20 +69,30 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 
     if res:
       print socketobj.send(res)
+      # If new a event occurs we need to make a check with the history
+      if method in write_methods and not 'history' in parameters:
+          settimer(2, check_history, ())
 
     stopcomm(thiscommhandle)
 
-    if isHost(host) and method == 'POST':
 
+    if isHost(host) and method in write_methods:
       httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp())
 
       for neighbor in mycontext['neighbors']:
         neighbor.send_msg(httpRequest.get_request())
 
-    if str(status)[:1] == '4':
-        print "Http Response returned with Status Code: %d" % status
-        print "Adding request to history"
-        mycontext['history'].append(httpRequest);
+    if str(status)[:1] == '4' and isHost(host):
+
+        if not 'history' in parameters:
+            print "Http Response returned with Status Code: %d" % status
+            print "Adding request to history"
+            httpRequest.add_parameter('history', mycontext['clock'].get_timestamp())
+            mycontext['history'][mycontext['clock'].get_timestamp()] = httpRequest
+
+    elif str(status)[:1] == '2' and 'history' in parameters:
+        del mycontext['history'][parameters['history']]
+
 
   except Exception, e:
     print "\nException in board: %s, %s" %(type(e), e)
@@ -94,8 +105,8 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
-  # List that contains history in the case of a request failing
-  mycontext['history'] = []
+  # dictionary that contains history in the case of a request failing
+  mycontext['history'] = {}
   mycontext['lock'] = getlock()
 
   api = Api()

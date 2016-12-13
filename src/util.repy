@@ -141,3 +141,22 @@ def isHost(host):
 
 def get_host():
   return str(mycontext['ip']) + ":" + str(mycontext['port'])
+
+# Primitive approach to handle failed requests
+def check_history():
+    # If there has been more than three modifications to the board we assume
+    # that an incorrect call was made
+    lifespan = 10
+    oldHistory = []
+
+    for key, httpRequest in mycontext['history'].iteritems():
+        if is_old_history(key, lifespan):
+            oldHistory = key
+        else:
+            mycontext['connection'].send_msg(httpRequest.get_request())
+
+    for key in oldHistory:
+        del mycontext['history'][key]
+
+def is_old_history(timestamp, lifespan):
+    return int(timestamp) < int(mycontext['clock'].get_timestamp()) - lifespan
