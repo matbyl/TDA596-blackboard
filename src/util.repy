@@ -14,7 +14,7 @@
 def make_http_response(status, status_text, htmlresponse=''):
   response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html;charset=UTF-8\r\nContent-length: %s\r\n\r\n%s"
   res = response_template % (status, status_text, str(len(htmlresponse)), htmlresponse)
-  return res
+  return (res, status)
 
 # ------------------------------------------------------------------------------
 #  Creates a 404 response to display in HTTP request

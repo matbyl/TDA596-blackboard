@@ -15,8 +15,6 @@ def get_handler(endpoint):
 
   return mycontext['api'].get(endpoint)
 
-
-
 def post_handler(endpoint, httpRequest):
   parameters = httpRequest.get_parameters()
 
@@ -42,17 +40,22 @@ def get_board():
 def add_entry(httpRequest):
   try:
     parameters = httpRequest.get_parameters()
-    mycontext['lock'].acquire()
+
 
     print parameters
     msgid =  int(parameters['id'])
-    print "NEW RANDOM ID" + str(msgid)
-    msg = parameters['entry']
-    timestamp = mycontext['clock'].get_timestamp()
-    mycontext['entries'][msgid] = Entry(msgid, msg, timestamp, httpRequest.get_host())
-    mycontext['lock'].release()
 
-    return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
+    if not msgid in mycontext['entries']:
+        msg = parameters['entry']
+        timestamp = mycontext['clock'].get_timestamp()
+
+        mycontext['lock'].acquire()
+        mycontext['entries'][msgid] = Entry(msgid, msg, timestamp, httpRequest.get_host())
+        mycontext['lock'].release()
+
+        return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
+    else:
+        return make_http_response(409, 'Conflict')
 
   except Exception, e:
     print "Unable to handle add_entry request %s, %s" %(type(e), e)
@@ -60,10 +63,14 @@ def add_entry(httpRequest):
 
 def remove_entry(msgid):
   try:
-    mycontext['lock'].acquire()
-    del mycontext['entries'][msgid]
-    mycontext['lock'].release()
-    return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
+    if msgid in mycontext['entries']:
+        mycontext['lock'].acquire()
+        del mycontext['entries'][msgid]
+        mycontext['lock'].release()
+
+        return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
+    else:
+        return make_http_response(404, 'Not Found');
 
   except Exception:
     raise Exception("Unable to remove entry")
@@ -71,12 +78,15 @@ def remove_entry(msgid):
 def modify_entry(msgid, httpRequest):
   try:
     parameters = httpRequest.get_parameters()
-
     msg = parameters['entry']
-    mycontext['lock'].acquire()
-    mycontext['entries'][msgid].set_html(msg)
-    mycontext['lock'].release()
-    return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+
+    if msgid in mycontext['entries']:
+        mycontext['lock'].acquire()
+        mycontext['entries'][msgid].set_html(msg)
+        mycontext['lock'].release()
+        return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+    else:
+        return make_http_response(404, 'Not Found');
 
   except Exception:
     raise Exception("Unable to modify entry")

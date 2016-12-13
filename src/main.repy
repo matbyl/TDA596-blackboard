@@ -37,10 +37,11 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     host = httpRequest.get_host()
     parameters = httpRequest.get_parameters()
     res = ''
+    status = 0
 
     if method == 'GET':
         if endpoint != "/favicon.ico":
-          res = get_handler(endpoint)
+          res, status = get_handler(endpoint)
 
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     elif method == 'POST':
@@ -58,12 +59,12 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       if not 'id' in parameters:
         httpRequest.add_parameter('id', mycontext['randomid'] + str(uniqueid_getid()))
 
-      res = post_handler(endpoint, httpRequest)
+      res, status = post_handler(endpoint, httpRequest)
 
     elif method == 'PUT':
-      res = mycontext['api'].put(endpoint, httpRequest)
+      res, status = mycontext['api'].put(endpoint, httpRequest)
     elif method == 'DELETE':
-      res = mycontext['api'].delete(endpoint)
+      res, status = mycontext['api'].delete(endpoint)
 
     if res:
       print socketobj.send(res)
@@ -77,8 +78,14 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       for neighbor in mycontext['neighbors']:
         neighbor.send_msg(httpRequest.get_request())
 
+    if str(status)[:1] == '4':
+        print "Http Response returned with Status Code: %d" % status
+        print "Adding request to history"
+        mycontext['history'].append(httpRequest);
+
   except Exception, e:
     print "\nException in board: %s, %s" %(type(e), e)
+
 
 # ------------------------------------------------------------------------------
 # Main entry point of the program. Initalizes global variables in mycontext
@@ -87,6 +94,8 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
+  # List that contains history in the case of a request failing
+  mycontext['history'] = []
   mycontext['lock'] = getlock()
 
   api = Api()
