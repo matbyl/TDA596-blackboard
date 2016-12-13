@@ -102,8 +102,7 @@ def generate_html_page():
 # ------------------------------------------------------------------------------
 def generate_entries():
   entry_objects = mycontext['entries'].values()
-  entry_objects.sort(compare_entries)
-  entries = map(get_entry_html, entry_objects)
+  entries = map(get_entry_html, sortEntries(entry_objects))
   return entries
 
 # ------------------------------------------------------------------------------
@@ -117,9 +116,15 @@ def get_entry_html(entry):
 # generated the entry is compared instead
 # ------------------------------------------------------------------------------
 def compare_entries(e1, e2):
-  if e1.get_timestamp() == e2.get_timestamp():
+  ts1 = int(e1.get_timestamp())
+  ts2 = int(e2.get_timestamp())
+
+  print "Comparing entries %d with %d" % (ts1, ts2)
+
+  if ts1 == ts2:
     return e1.get_host() > e2.get_host()
-  return e1.get_timestamp() < e2.get_timestamp()
+
+  return ts1 < ts2
 
 # ------------------------------------------------------------------------------
 # Utility function to parse an endpoint
@@ -171,3 +176,23 @@ def is_old_history(timestamp, lifespan):
 # Check to see if a write happened after the current timestamp on the entry
 def is_invalid_write(c_timestamp, w_timestamp):
     return w_timestamp < c_timestamp
+
+def sortEntries(entries):
+    less  = []
+    equal = []
+    greater = []
+
+    if len(entries) > 1:
+        pivot = entries[0]
+
+        for item in entries:
+            if item.get_timestamp() < pivot.get_timestamp():
+                less.append(item)
+            elif item.get_timestamp() > pivot.get_timestamp():
+                greater.append(item)
+            elif item.get_timestamp() == pivot.get_timestamp():
+                equal.append(item)
+
+        return sortEntries(less) + equal + sortEntries(greater)
+    else:
+        return entries
