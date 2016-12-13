@@ -43,19 +43,19 @@ def add_entry(httpRequest):
   try:
     parameters = httpRequest.get_parameters()
     mycontext['lock'].acquire()
-    
+
     print parameters
     msgid =  int(parameters['id'])
+    print "NEW RANDOM ID" + str(msgid)
     msg = parameters['entry']
-    entry = generate_entry(msgid, msg)
-    timestamp = mycontext['clock'].get_timestamp(httpRequest.get_host())
-    mycontext['entries'][msgid] = Entry(msgid, entry, timestamp, httpRequest.get_host())
+    timestamp = mycontext['clock'].get_timestamp()
+    mycontext['entries'][msgid] = Entry(msgid, msg, timestamp, httpRequest.get_host())
     mycontext['lock'].release()
 
     return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
 
-  except Exception:
-    raise Exception("Unable to handle add_entry request")
+  except Exception, e:
+    print "Unable to handle add_entry request %s, %s" %(type(e), e)
 
 
 def remove_entry(msgid):
@@ -64,7 +64,7 @@ def remove_entry(msgid):
     del mycontext['entries'][msgid]
     mycontext['lock'].release()
     return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
-    
+
   except Exception:
     raise Exception("Unable to remove entry")
 
@@ -77,6 +77,6 @@ def modify_entry(msgid, httpRequest):
     mycontext['entries'][msgid].set_html(msg)
     mycontext['lock'].release()
     return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
-   
+
   except Exception:
     raise Exception("Unable to modify entry")

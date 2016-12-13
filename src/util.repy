@@ -3,7 +3,7 @@
 # Util module
 #
 # Description: This module should contain functions that are useful in several
-# case. 
+# case.
 #
 # ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ def extract_http_request_header_value(headers, header):
 
     if value == []:
       raise Exception
-    
+
     return value
   except Exception:
     print "Unable to extract" + header + " from http request"
@@ -85,8 +85,8 @@ def extract_parameters_from_query(msg):
 
 
 # ------------------------------------------------------------------------------
-# Outputs the blackboard html 
-# ------------------------------------------------------------------------------   
+# Outputs the blackboard html
+# ------------------------------------------------------------------------------
 def generate_html_page():
 
   # dynamic title showing Ip address, port and up time.
@@ -100,7 +100,7 @@ def generate_html_page():
 
 # ------------------------------------------------------------------------------
 # Retrieves all entries in a sorted fashion according to their given timestamp
-# ------------------------------------------------------------------------------  
+# ------------------------------------------------------------------------------
 def generate_entries():
   entry_objects = mycontext['entries'].values()
   entry_objects.sort(compare_entries)
@@ -109,14 +109,14 @@ def generate_entries():
 
 # ------------------------------------------------------------------------------
 # Helper function to map entry objects to a list with corresponding html-items
-# ------------------------------------------------------------------------------  
+# ------------------------------------------------------------------------------
 def get_entry_html(entry):
   return entry.get_html()
 
 # ------------------------------------------------------------------------------
 # Compares two entries timestamps, in the case that they are equal the host that
 # generated the entry is compared instead
-# ------------------------------------------------------------------------------  
+# ------------------------------------------------------------------------------
 def compare_entries(e1, e2):
   if e1.get_timestamp() == e2.get_timestamp():
     return e1.get_host() > e2.get_host()

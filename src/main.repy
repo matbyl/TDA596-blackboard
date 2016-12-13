@@ -1,35 +1,35 @@
 include api.repy
 include neighbors.repy
 include handlers.repy
-include vectorClock.repy
+include logicalClock.repy
 include httprequest.repy
 
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections in board() function
-# ------------------------------------------------------------------------------   
+# ------------------------------------------------------------------------------
 def start_board():
   ip = mycontext['ip']
   port = mycontext['port']
 
   print "Listening on IP " + str(ip) +" port " + str(port)
-  try: 
+  try:
     listencommhandle = waitforconn(ip, port, board_connection_handler)
   except Exception, e:
     print "Exception in start_board: %s, %s\n" %(type(e), e)
     raise
     #pass
 
-# ------------------------------------------------------------------------------    
-# Called when an incoming message is received. 
+# ------------------------------------------------------------------------------
+# Called when an incoming message is received.
 # --> Important starting point
-# ------------------------------------------------------------------------------    
+# ------------------------------------------------------------------------------
 def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
   try:
     msgheader = socketobj.recv(1024)
 
     httpRequest = HttpRequest()
     httpRequest.parse(msgheader)
-    
+
     print httpRequest.get_info()
 
     method = httpRequest.method
@@ -37,7 +37,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     host = httpRequest.get_host()
     parameters = httpRequest.get_parameters()
     res = ''
-  
+
     if method == 'GET':
         if endpoint != "/favicon.ico":
           res = get_handler(endpoint)
@@ -45,49 +45,49 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     elif method == 'POST':
 
-      # If the message is not from the host we need to account for the timestamp of the message recieved
-      if isHost(host):
-        mycontext['clock'].tick()
-        print mycontext['clock']
+      # We need to account for the timestamp of the message recieved
+      if not isHost(host):
+        mycontext['clock'].update(httpRequest.get_header('Host-Timestamp'))
       else:
-        mycontext['clock'].update(host, httpRequest.get_header('Host-Timestamp'))
-        print mycontext['clock']
-      
+        mycontext['clock'].tick()
+
+      print mycontext['clock']
+
       # If there is not id for the entry yet we generate a new one
       # note that this also gets passed to the neighbors laters
       if not 'id' in parameters:
-        httpRequest.add_parameter('id', uniqueid_getid())
-      
+        httpRequest.add_parameter('id', mycontext['randomid'] + str(uniqueid_getid()))
+
       res = post_handler(endpoint, httpRequest)
 
     elif method == 'PUT':
       res = mycontext['api'].put(endpoint, httpRequest)
     elif method == 'DELETE':
       res = mycontext['api'].delete(endpoint)
-    
+
     if res:
       print socketobj.send(res)
-  
+
     stopcomm(thiscommhandle)
 
     if isHost(host) and method == 'POST':
 
-      httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp(host))
+      httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp())
 
       for neighbor in mycontext['neighbors']:
-        neighbor.send_msg(httpRequest.get_request())    
+        neighbor.send_msg(httpRequest.get_request())
 
   except Exception, e:
     print "\nException in board: %s, %s" %(type(e), e)
 
-# ------------------------------------------------------------------------------    
+# ------------------------------------------------------------------------------
 # Main entry point of the program. Initalizes global variables in mycontext
 # and calls start_board() which opens a socket for incoming connections.
 # ------------------------------------------------------------------------------
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
-  mycontext['lock'] = getlock() 
+  mycontext['lock'] = getlock()
 
   api = Api()
 
@@ -117,8 +117,8 @@ if callfunc == 'initialize':
         print "Could not get an IP\n"
         print (type(e), e)
         raise
-  
-  # Fail if we don't have 1 or 2 arguments  
+
+  # Fail if we don't have 1 or 2 arguments
   else:
     raise Exception("Usage: python <path to repy.py> <path to restrictions.default> main.repy <port> [ip (optional)]")
 
@@ -126,16 +126,14 @@ if callfunc == 'initialize':
   mycontext['port'] = port
   mycontext['ip'] = ip
   mycontext['connection'] = Connection(ip, port)
-
+  mycontext['randomid'] = str(int(10000 * randomfloat()))
+  print mycontext['randomid']
 
   # Nearest neighbor of the current host
   mycontext['neighbors'] = get_all_neighbors()
 
-  # we need the host before we initialize the vectorclock
-  mycontext['clock'] = VectorClock(mycontext['connection'].get_host())
-  # Add all neighbors to the vector clock
-  for neighbor in mycontext['neighbors']:
-    mycontext['clock'].add_clock(neighbor.get_host())
+  # we need the host before we initialize the logicalClock
+  mycontext['clock'] = LogicalClock()
 
   #read html template files
   mycontext['entry_template'] = open("entry_template.html").read()

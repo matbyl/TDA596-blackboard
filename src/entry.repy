@@ -11,9 +11,9 @@ include util.repy
 
 class Entry:
 
-    def __init__(self, msgid, html, timestamp, host):
+    def __init__(self, msgid, msg, timestamp, host):
         self.id = msgid
-        self.html = html
+        self.set_html(msg)
         self.timestamp = timestamp
         self.host = host
 
