@@ -13,9 +13,13 @@ class Entry:
 
     def __init__(self, msgid, msg, timestamp, host):
         self.id = msgid
-        self.set_html(msg, timestamp)
-        self.timestamp = timestamp
+        self.msg = msg
+        self.set_html(timestamp)
+        self.timestamp = int(timestamp)
         self.host = host
+
+    def __str__(self):
+        return "ID: %s, \t MSG: %s, \t TS: %d" % (self.id, self.msg, self.timestamp)
 
     def get_timestamp(self):
         return self.timestamp
@@ -29,6 +33,13 @@ class Entry:
     def last_update(self):
         return self.last_updated;
 
-    def set_html(self, msg, timestamp):
-        self.last_updated = timestamp;
-        self.html = generate_entry(self.id, msg)
+    def update(self, msg, timestamp):
+        self.set_msg(msg)
+        self.set_html(timestamp)
+
+    def set_msg(self, msg):
+        self.msg = msg
+
+    def set_html(self, timestamp):
+        self.last_updated = int(timestamp);
+        self.html = generate_entry(self.id, self.msg)

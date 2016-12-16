@@ -47,7 +47,7 @@ def add_entry(httpRequest):
 
     if not msgid in mycontext['entries']:
         msg = parameters['entry']
-        timestamp = mycontext['clock'].get_timestamp()
+        timestamp = parameters['timestamp']
 
         mycontext['lock'].acquire()
         mycontext['entries'][msgid] = Entry(msgid, msg, timestamp, httpRequest.get_host())
@@ -95,12 +95,12 @@ def modify_entry(msgid, httpRequest):
             raise Exception()
 
         mycontext['lock'].acquire()
-        mycontext['entries'][msgid].set_html(msg, mycontext['clock'].get_timestamp())
+        mycontext['entries'][msgid].update(msg, mycontext['clock'].get_timestamp())
         mycontext['lock'].release()
 
         return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
     else:
         return make_http_response(404, 'Not Found');
 
-  except Exception:
-    raise Exception("Unable to modify entry")
+  except Exception, e:
+    print "Unable to modify entry, Error: %s" % e

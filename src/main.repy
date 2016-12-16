@@ -31,7 +31,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     httpRequest = HttpRequest()
     httpRequest.parse(msgheader)
 
-    print httpRequest.get_info()
+    # print httpRequest.get_info()
 
     write_methods = ['POST', 'PUT', 'DELETE']
     method = httpRequest.method
@@ -48,18 +48,23 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     # React depending on message type: HTTP GET or POST, or some other type of communication.
     elif method == 'POST':
 
+      if mycontext['firstPost']:
+        mycontext['firstPost'] = False
+        mycontext['startTime'] = getruntime()
+
       # We need to account for the timestamp of the message recieved
       if not isHost(host):
         mycontext['clock'].update(httpRequest.get_header('Host-Timestamp'))
       else:
         mycontext['clock'].tick()
 
-      print mycontext['clock']
-
       # If there is not id for the entry yet we generate a new one
       # note that this also gets passed to the neighbors laters
       if not 'id' in parameters:
         httpRequest.add_parameter('id', mycontext['randomid'] + str(uniqueid_getid()))
+
+      if not 'timestamp' in parameters:
+        httpRequest.add_parameter('timestamp', mycontext['clock'].get_timestamp())
 
       res, status = post_handler(endpoint, httpRequest)
 
@@ -69,18 +74,23 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
       res, status = mycontext['api'].delete(endpoint, httpRequest)
 
     if res and len(res) < SOCKET_MAX_SIZE:
-      print socketobj.send(res)
+      socketobj.send(res)
 
       # If new a event occurs we need to make a check with the history
       if not mycontext['checkingHistory'] and method in write_methods and not 'history' in parameters:
-          mycontext['checkingHistory'] = True
-          settimer(2, check_history, ())
+        mycontext['checkingHistory'] = True
+        settimer(20, check_history, ())
+
+      if not mycontext['updatingMessages'] and method in write_methods:
+        mycontext['updatingMessages'] = True
+        settimer(20, update_messages, ())
 
     stopcomm(thiscommhandle)
 
 
     if isHost(host) and method in write_methods:
       httpRequest.add_header('Host-Timestamp', mycontext['clock'].get_timestamp())
+      
 
       for neighbor in mycontext['neighbors']:
         neighbor.send_msg(httpRequest.get_request())
@@ -96,7 +106,7 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
     elif str(status)[:1] == '2' and 'history' in parameters:
         del mycontext['history'][parameters['history']]
 
-
+    
   except Exception, e:
     print "\nException in board: %s, %s" %(type(e), e)
 
@@ -108,6 +118,11 @@ def board_connection_handler(ip, port, socketobj, thiscommhandle, listencommhand
 if callfunc == 'initialize':
   # DEFINE GLOBALS
   mycontext['entries'] = {}
+  mycontext['firstPost'] = True
+  mycontext['startTime'] = getruntime();
+  mycontext['eventualConsistency'] = 0;
+  mycontext['msgList'] = []
+  mycontext['updatingMessages'] = False
   # dictionary that contains history in the case of a request failing
   mycontext['history'] = {}
   mycontext['checkingHistory'] = False

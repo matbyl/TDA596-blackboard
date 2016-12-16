@@ -12,7 +12,7 @@
 <!-- Inlined javascript code. This could be optionally hosted in another file on the server and included using 'src' attribute as above -->
 <script>
 
-var page_reload_timeout = 5; //in seconds
+var page_reload_timeout = 10; //in seconds
 var page_reload_count = 0;
 
 function update_contents(){
@@ -111,20 +111,6 @@ footer {
     font-weight: bold; 
 }
 
-::-webkit-scrollbar {
-    width: 12px;
-}
- 
-::-webkit-scrollbar-track {
-    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
-    border-radius: 10px;
-}
- 
-::-webkit-scrollbar-thumb {
-    border-radius: 10px;
-    background: grey;
-}
-
 .btn-warn {
     background: #d6553e;
     -webkit-border-radius: 2;
@@ -133,7 +119,7 @@ footer {
     border-style: none;
     color: #ffffff;
     text-decoration: none;
-    padding: 5px 5px 5px 5px;
+    padding: auto 5px auto 5px;
 }
 
 .btn-warn:hover {
