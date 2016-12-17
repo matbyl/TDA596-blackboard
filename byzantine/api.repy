@@ -1,0 +1,52 @@
+"""
+
+Name: Api
+Description: A small module to create and handle endpoint calls
+
+"""
+
+class Api:
+
+  def __init__(self):
+    self.resources = {}
+
+  def get(self, endpoint):
+    return self.resources[endpoint].handle('GET')
+
+  def post(self, endpoint, httpRequest):
+    return self.resources[endpoint].handle('POST', httpRequest)
+
+  def delete(self, endpoint, httpRequest):
+    endpoint_parts = endpoint.split('/')
+    resource = '/' + endpoint_parts[1]
+    msgid = int(endpoint_parts[2])
+
+    return self.resources[resource].handle('DELETE', msgid, httpRequest)
+
+  def put(self, endpoint, httpRequest):
+    endpoint_parts = endpoint.split('/')
+    resource = '/' + endpoint_parts[1]
+    msgid = int(endpoint_parts[2])
+
+    return self.resources[resource].handle('PUT', msgid, httpRequest)
+
+  def add_resource(self, handlers, endpoints, collection=False):
+    resource = Resource(handlers, collection)
+
+    for endpoint in endpoints:
+      self.resources[endpoint] = resource
+
+
+class Resource:
+
+  def __init__(self, handlers, collection):
+      self.handlers = handlers
+      self.collection = collection
+
+  def handle(self, method=None, *args):
+
+    if self.handlers[method]:
+      if args:
+        return self.handlers[method](*args)
+      else:
+        return self.handlers[method]()

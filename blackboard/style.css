@@ -1,0 +1,97 @@
+
+body {
+    font-family: helvetica;
+}
+
+#board-content {
+    float:left;
+    width: 50%;
+    height: 100%;
+}
+
+#request-information {
+    float: right;
+    width: 40%;
+    height: 100%;
+}
+
+.status {
+    color: red;
+    font-size: 75%; 
+}
+
+.entry_title {
+    margin: 2px 0px 0px 0px;      
+    color: blue;
+    font-size: 110%;
+    font-weight: bold;
+}
+
+.entryform {
+    margin: 2px 0px 0px 0px;      
+    color: blue;
+}
+
+#clock_placeholder {
+    font-size: 75%;
+}
+
+#countdown_placeholder {
+    font-size: 75%;
+}
+
+#boardcontents_status_placeholder {
+    font-size: 75%; color: gray;
+}
+
+footer {
+    position: absolute;
+    right: 10px;
+    bottom: 0;
+    font-size: 75%; 
+    color: gray;
+}
+
+#boardcontents-wrapper {
+    overflow-y: auto;
+    height: 180px;
+}
+
+#boardcontents_placeholder {
+    margin: 10px 0px 0px 0px;    
+}
+
+#boardtitle_placeholder {
+    font-size: 75%;
+    font-weight: bold; 
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+ 
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    border-radius: 10px;
+}
+ 
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: grey;
+}
+
+.btn-warn {
+    background: #d6553e;
+    -webkit-border-radius: 2;
+    -moz-border-radius: 2;
+    border-radius: 2px;
+    border-style: none;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 5px 5px 5px 5px;
+}
+
+.btn-warn:hover {
+    background: #852c1c;
+    text-decoration: none;
+}

@@ -1,0 +1,124 @@
+include api.repy
+include neighbors.repy
+include handlers.repy
+include logicalClock.repy
+include httprequest.repy
+
+# ------------------------------------------------------------------------------
+# Start listening and handle incoming connections to the application
+# ------------------------------------------------------------------------------
+def start_application():
+  ip = mycontext['ip']
+  port = mycontext['port']
+
+  print "Listening on IP " + str(ip) +" port " + str(port)
+  try:
+    listencommhandle = waitforconn(ip, port, connection_handler)
+  except Exception, e:
+    print "Exception in start_board: %s, %s\n" %(type(e), e)
+    raise
+    #pass
+
+# ------------------------------------------------------------------------------
+# Called when an incoming message is received.
+# ------------------------------------------------------------------------------
+def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
+  try:
+    # Make sure that the response is not bigger than max allowed package size
+    SOCKET_MAX_SIZE = 10000
+    msgheader = socketobj.recv(1024)
+
+    httpRequest = HttpRequest()
+    httpRequest.parse(msgheader)
+
+    print httpRequest.get_info()
+
+    write_methods = ['POST', 'PUT', 'DELETE']
+    method = httpRequest.method
+    endpoint = httpRequest.uri
+    host = httpRequest.get_host()
+    parameters = httpRequest.get_parameters()
+    res = ''
+    status = 0
+
+    if method == 'GET':
+        # We do not support favicon's
+        if endpoint == "/favicon.ico":
+          return
+        res, status = get_handler(endpoint)
+
+    # React depending on message type: HTTP GET or POST, or some other type of communication.
+    elif method == 'POST':
+      res, status = post_handler(endpoint, httpRequest)
+
+    elif method == 'PUT':
+      res, status = mycontext['api'].put(endpoint, httpRequest)
+      
+    elif method == 'DELETE':
+      res, status = mycontext['api'].delete(endpoint, httpRequest)
+
+    if res and len(res) < SOCKET_MAX_SIZE:
+      socketobj.send(res)
+
+    stopcomm(thiscommhandle)
+    
+  except Exception, e:
+    print "\nException in board: %s, %s" %(type(e), e)
+
+
+# ------------------------------------------------------------------------------
+# Main entry point of the program. Initalizes global variables in mycontext
+# and calls start_board() which opens a socket for incoming connections.
+# ------------------------------------------------------------------------------
+if callfunc == 'initialize':
+  # DEFINE GLOBALS
+  mycontext['startTime'] = getruntime();
+  mycontext['lock'] = getlock()
+
+  mycontext['api'] = Api()
+  mycontext['api'].add_resource({'GET': get_index}, ['/'])
+  mycontext['api'].add_resource({'GET': get_result}, ['/vote/result'])
+  mycontext['api'].add_resource({'POST': vote_attack}, ['/vote/attack'])
+  mycontext['api'].add_resource({'POST': vote_retreat}, ['/vote/retreat'])
+  mycontext['api'].add_resource({'POST': vote_byzantine}, ['/vote/byzantine']) 
+  
+  # whenever this vessel gets a connection on its IP:port it'll call function board_connection_handler
+  if len(callargs) == 1 or len(callargs) == 2:
+    port = int(callargs[0])
+    if len(callargs) == 2:
+      ip=str(callargs[1])
+    else:
+      try:
+        ip = getmyip()
+      except Exception, e:
+        print "Could not get an IP\n"
+        print (type(e), e)
+        raise
+
+  # Fail if we don't have 1 or 2 arguments
+  else:
+    raise Exception("Usage: python <path to repy.py> <path to restrictions.default> main.repy <port> [ip (optional)]")
+
+  #Initialize Port and IP
+  mycontext['ip'] = ip
+  mycontext['port'] = port
+  mycontext['connection'] = Connection(ip, port)
+  
+  # Assign a random ID to the vessel between 0-100000 
+  # NOTE: There is nothing that promise a unique ID
+  mycontext['vesselID'] = str(int(100000 * randomfloat()))
+
+  # Nearest neighbor of the current host
+  mycontext['neighbors'] = get_all_neighbors()
+
+  # we need the host before we initialize the logicalClock
+  mycontext['clock'] = LogicalClock()
+
+  #read html template files
+  mycontext['vote_frontpage_template'] = open("vote_frontpage_template.html").read()
+  mycontext['vote_result_template'] = open("vote_result_template.html").read()
+  
+  # Cool dudes!
+  mycontext['authors'] = "Mathias Bylund, Anton Rose"
+
+  start_application()

@@ -1,0 +1,119 @@
+"""
+
+  Name: handlers.repy
+  Description: Handlers for all the requests
+
+"""
+include util.repy
+
+def get_handler(endpoint):
+    # if any thread has entered the election , then do nothing
+    # if not trigger the election from this thread
+
+    # ping nearest neighbor ,
+    # if alive then start the election and release lock
+    # if not alive , ping next nearest neighbor
+    # repeat
+
+  return mycontext['api'].get(endpoint)
+
+def post_handler(endpoint, httpRequest):
+  parameters = httpRequest.get_parameters()
+
+  if parameters.has_key('delete'):
+    if int(parameters['delete']) == 1:
+      return mycontext['api'].delete(endpoint, httpRequest)
+    else:
+      return mycontext['api'].put(endpoint, httpRequest)
+  else:
+    return mycontext['api'].post(endpoint, httpRequest)
+
+# ------------------------------------------------------------------------------
+# Handles initial GET request from browser, outputs HTML string and closes socket.
+# ------------------------------------------------------------------------------
+def get_index():
+  htmlresponse = generate_html_page()
+  return make_http_response(200, 'OK', htmlresponse)
+
+def get_result():
+  pass
+  
+def vote_attack():
+  pass
+  
+def vote_retreat():
+  pass
+  
+def vote_byzantine():
+  pass
+
+# ------------------------------------------------------------------------------
+# Creates and adds a new entry to the global variable entries
+# ------------------------------------------------------------------------------
+def add_entry(httpRequest):
+  try:
+    parameters = httpRequest.get_parameters()
+
+
+    print parameters
+    msgid =  int(parameters['id'])
+
+    if not msgid in mycontext['entries']:
+        msg = parameters['entry']
+        timestamp = parameters['timestamp']
+
+        mycontext['lock'].acquire()
+        mycontext['entries'][msgid] = Entry(msgid, msg, timestamp, httpRequest.get_host())
+        mycontext['lock'].release()
+
+        return make_http_response(201, 'Created', "Added new entry! <br />ID: " + str(msgid) + "<br />Message: " + msg)
+    else:
+        return make_http_response(409, 'Conflict')
+
+  except Exception, e:
+    print "Unable to handle add_entry request %s, %s" %(type(e), e)
+
+
+def remove_entry(msgid, httpRequest):
+  try:
+    parameters = httpRequest.get_parameters()
+
+    if msgid in mycontext['entries']:
+
+        # If the current request is historical we need to make sure that
+        # deletion happened after the entry was created
+        if 'history' in parameters and is_invalid_write(mycontext['entries'][msgid].get_timestamp(), parameters['history']):
+            raise Exception();
+
+        mycontext['lock'].acquire()
+        del mycontext['entries'][msgid]
+        mycontext['lock'].release()
+
+        return make_http_response(200, 'OK', "Removed entry: " + str(msgid))
+    else:
+        return make_http_response(404, 'Not Found');
+
+  except Exception:
+    raise Exception("Unable to remove entry")
+
+def modify_entry(msgid, httpRequest):
+  try:
+    parameters = httpRequest.get_parameters()
+    msg = parameters['entry']
+
+    if msgid in mycontext['entries']:
+
+        # If history is older then the current update value do not modify the entry
+        if 'history' in parameters and is_invalid_write(mycontext['entries'][msgid].last_update(), parameters['history']):
+            raise Exception()
+
+        mycontext['lock'].acquire()
+        mycontext['entries'][msgid].update(msg, mycontext['clock'].get_timestamp())
+        mycontext['lock'].release()
+
+        return make_http_response(200, 'OK', "Modified entry: " + str(msgid))
+    else:
+        return make_http_response(404, 'Not Found');
+
+  except Exception, e:
+    print "Unable to modify entry, Error: %s" % e

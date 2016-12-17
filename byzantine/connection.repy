@@ -1,0 +1,36 @@
+"""
+
+ Name: connection.repy
+ Description: A class to handle connections between vessels
+
+"""
+
+include sockettimeout.repy
+
+class Connection:
+
+  def __init__(self, ip, port):
+    self.ip = str(ip)
+    self.port = int(port)
+
+  def __str__(self):
+    return "\nIP: " + str(self.ip) + "\nPort: " + str(self.port) + "\n"
+
+	# --------------------------------------
+	# Sends  a message to the connection
+	# --------------------------------------
+  def send_msg(self, msg):
+    try:
+      connection = timeout_openconn(self.ip, self.port)
+      if connection:
+        connection.send(msg)
+        connection.close()
+    except Exception, e:
+      print "Exception in " + self.get_host() + ": %s, %s\n" %(type(e), e)
+
+	# --------------------------------------
+	# Returns a host string in the
+	# following format: 'ip:port'
+	# --------------------------------------
+  def get_host(self):
+    return self.ip + ":" + str(self.port)

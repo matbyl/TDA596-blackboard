@@ -1,0 +1,124 @@
+"""
+
+Name: HttpRequest
+Description: Aims to make http requests easier to manipulate
+
+"""
+
+class HttpRequest:
+
+  def __init__(self):
+    self.uri = ""
+    self.type = ""
+    self.method = ""
+    self.headers = {}
+    self.parameters = {}
+
+  def __str__(self):
+    msg = "\nMethod: " + self.method
+    msg += "\nUri: " + self.uri
+    msg += "\nType: " + self.type
+    msg += "\nHeaders: " + str(self.headers) 
+    msg += "\nParameters: " + str(self.parameters) + "\n"
+
+    return msg
+
+  def parse(self, request):
+
+    # We parse each line individually
+    lines = request.split("\r\n")
+        
+    # Before adding headers we check the first line to determin
+    # Uri and Method of the request
+    line = lines.pop(0)
+    self.uri = line.split(' ')[1]
+    self.type = line.split(' ')[2]
+    self.method = line.split(' ')[0]
+        
+    # The next line is assumed to contain the first header
+    line = lines.pop(0)
+
+    # Every next line should be a header until we hit an empty line
+    while len(line) > 0:
+      index = line.index(":")
+      if index:
+        # We add a new header by taking the key as the string before the colon
+        # and taking the value after the two later indices
+        # assuming that one is the colon and the other a space, e.g: key: value
+        self.headers[line[:index]] = line[index + 2:]
+
+      line = lines.pop(0)
+
+    # If a Content-Length was found for the request we make sure to grab the parameters provided
+    if "Content-Length" in self.headers:
+      message = request[-int(self.get_content_length()):]
+
+      raw_parameters = message.split('&')
+               
+      for raw_parameter in raw_parameters:
+        parameter = raw_parameter.split('=')
+              
+        if len(parameter)>1:
+          self.parameters[parameter[0]] = parameter[1]
+
+  def get_info(self):
+    msg = "\nMethod: " + self.method
+    msg += "\nUri: " + self.uri
+    msg += "\nType: " + self.type
+
+    return msg 
+
+  def get_parameters(self):
+    return self.parameters
+
+  def get_parameter(self, key):
+    try:
+      if key in self.parameters:
+        return self.parameters[key]
+    except Exception, e:  
+      raise "Exception in httprequest: Parameter %s was not found" % key
+
+  def get_parameter_string(self):
+    msg = ""
+    for key, value in self.parameters.iteritems():
+      msg += "%s=%s&" % (key,value)
+      
+    return msg[:-1]
+
+  def get_header(self, header):
+    return self.headers[header]
+
+  def get_content_length(self):
+    return int(self.headers["Content-Length"])
+
+  def get_host(self):
+    return self.headers["Host"]
+
+  def set_content_length(self, length):
+    self.headers["Content-Length"] = length
+
+  def update_content_length(self):
+    self.set_content_length(len(self.get_parameter_string()))
+
+  def get_request(self):
+    request = ""
+		
+    request += "%s %s %s \r\n" % (self.method, self.uri, self.type)
+
+    for key, value in self.headers.iteritems():
+      request += "%s: %s\r\n" % (key, value)
+
+    # We make an empty line before the message body
+    if self.parameters:
+      request += "\r\n"
+
+      request += self.get_parameter_string().strip()
+      
+    return request
+
+  def add_parameter(self, key, value):
+    self.parameters[key] = value
+    self.update_content_length()
+
+  def add_header(self, key, value):
+    self.headers[key] = value

@@ -1,0 +1,66 @@
+"""
+ Util module
+
+ Description: This module should contain functions that are useful in several
+ cases.
+ 
+"""
+
+# ------------------------------------------------------------------------------
+# Wrap into HTTP headers
+# ------------------------------------------------------------------------------
+def make_http_response(status, status_text, htmlresponse=''):
+  response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html;charset=UTF-8\r\nContent-length: %s\r\n\r\n%s"
+  res = response_template % (status, status_text, str(len(htmlresponse)), htmlresponse)
+  return (res, status)
+
+# ------------------------------------------------------------------------------
+#  Creates a 404 response to display in HTTP request
+# ------------------------------------------------------------------------------
+def make_404_response(msgheader):
+  # Do not mix HTML code with the server code as done here. This is a bad practice
+  template = '<html><head><style>.status {color: red;font-size: 75%%;}</style></head><body><pre><samp class="status">%s</samp></pre></body><html>'
+  htmlresponse = template % ("404 Not Found\n" + msgheader)
+  res = make_http_response(404, 'Not Found', htmlresponse)
+
+# ------------------------------------------------------------------------------
+#  Creates a 404 response to display in HTTP request
+# ------------------------------------------------------------------------------
+def make_post_request(msgheader, entry):
+  template = '{"entry": %s}'
+  htmlresponse = template % entry
+  return make_http_response(200, 'OK', htmlresponse)
+
+# ------------------------------------------------------------------------------
+# Outputs the blackboard html
+# ------------------------------------------------------------------------------
+def generate_html_page():
+
+  # dynamic title showing Ip address, port and up time.
+  fullpage = mycontext['vote_frontpage_template']
+  
+  return fullpage
+
+# ------------------------------------------------------------------------------
+# Utility function to parse an endpoint
+# ------------------------------------------------------------------------------
+def parse_endpoint(endpoint):
+  parts = endpoint.split('/')
+  return {
+    "resource": "/" + parts[0],
+    "id": parts[1]
+  }
+
+
+def isHost(host):
+  thisHost = get_host()
+  return thisHost == host
+
+def get_host():
+  return str(mycontext['ip']) + ":" + str(mycontext['port'])
+
+# ------------------------------------------------------------------------------
+# Retrieve elapsed time since the start of the program
+# ------------------------------------------------------------------------------
+def get_elapsed_time():
+  return mycontext['eventualConsistency'] - mycontext['startTime']
