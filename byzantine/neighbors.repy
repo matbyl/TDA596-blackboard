@@ -36,3 +36,36 @@ def get_all_neighbors():
       neighbors.append(Connection(ip, port))
 
   return neighbors
+
+# ------------------------------------------------------------------------------
+# Retrieves all nodes
+# ------------------------------------------------------------------------------
+def get_all_nodes():
+  f = open('neighborlist.txt')
+
+  port = mycontext['port']
+  host_index=0
+  index=-1
+  nodes={}
+
+  for line in f.readlines():
+    node=None
+    connection=None
+    index=index+1
+    # only asasume we have a port when working locally
+    if mycontext['ip'] == "127.0.0.1":
+      ip = line.split(":")[0]
+      port = int(line.split(":")[1])
+    else:
+      ip = line.strip('\n')
+
+    host = ip + ":" + str(port)
+    connection=Connection(ip,port)
+    node=node_voting(connection)
+    nodes.update({str(host):node})
+    if isHost(host):
+      host_index=index
+
+  mycontext['host_index']=host_index
+
+  return nodes

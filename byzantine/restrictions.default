@@ -16,6 +16,9 @@ resource random 100
 resource messport 63100     # use for getting an NTP update
 resource messport 63100
 resource connport 63100
+resource messport 63001     # use for getting an NTP update
+resource messport 63001
+resource connport 63001
 resource messport 63002     # use for getting an NTP update
 resource messport 63002
 resource connport 63002

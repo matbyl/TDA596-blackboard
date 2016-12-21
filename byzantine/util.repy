@@ -59,6 +59,10 @@ def isHost(host):
 def get_host():
   return str(mycontext['ip']) + ":" + str(mycontext['port'])
 
+
+def build_request_msg(mainmessage):
+  return mainmessage+" /None/ HTTP/1.1\r\nHost: " + mycontext['ip'] + ":" + str(
+    mycontext['port']) + "\r\nConnection: Close\r\n"
 # ------------------------------------------------------------------------------
 # Retrieve elapsed time since the start of the program
 # ------------------------------------------------------------------------------

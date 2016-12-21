@@ -1,0 +1,31 @@
+###############################################################################
+#
+# Name: node_voting.repy
+#
+# Description: A class to handle all the nodes and their votes
+#
+###############################################################################
+include connection.repy
+
+class node_voting:
+
+    def __init__ (self,connection):
+        self.connection = connection
+        self.node_vote=None
+        self.received_vote=[]
+
+    def __str__(self):
+        return "printing node: "+str(self.connection)
+
+    def get_node_connection(self):
+        return self.connection
+
+    def set_node_vote(self,vote):
+        if vote=='True' or vote=='Attack':
+            self.node_vote=True
+        elif vote=='False' or vote=='Attack':
+            self.node_vote=False
+
+        print "vote of node: "+str(self.connection.ip)+":"+str(self.connection.port)+" set to: "+str(self.node_vote)
+
+

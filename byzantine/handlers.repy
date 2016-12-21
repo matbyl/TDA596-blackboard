@@ -14,12 +14,10 @@ def get_handler(endpoint):
     # if alive then start the election and release lock
     # if not alive , ping next nearest neighbor
     # repeat
-
   return mycontext['api'].get(endpoint)
 
 def post_handler(endpoint, httpRequest):
   parameters = httpRequest.get_parameters()
-
   if parameters.has_key('delete'):
     if int(parameters['delete']) == 1:
       return mycontext['api'].delete(endpoint, httpRequest)
@@ -36,15 +34,26 @@ def get_index():
   return make_http_response(200, 'OK', htmlresponse)
 
 def get_result():
+  print "get result"
   pass
   
-def vote_attack():
+def vote_attack(httpRequest):
+  print "voted attack"
+  mycontext['myvote']=True
+  mycontext['generalstatus']='Honest'
+  broadcast_my_vote()
   pass
   
-def vote_retreat():
+def vote_retreat(httpRequest):
+  print "voted retreat"
+  mycontext['myvote']=False
+  mycontext['generalstatus'] = 'Honest'
+  broadcast_node_vote()
   pass
   
-def vote_byzantine():
+def vote_byzantine(httpRequest):
+  print "voted byzantine"
+  mycontext['generalstatus'] = 'Traitor'
   pass
 
 # ------------------------------------------------------------------------------

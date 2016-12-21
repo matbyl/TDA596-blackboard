@@ -37,6 +37,7 @@ class Api:
       self.resources[endpoint] = resource
 
 
+
 class Resource:
 
   def __init__(self, handlers, collection):
@@ -44,8 +45,8 @@ class Resource:
       self.collection = collection
 
   def handle(self, method=None, *args):
-
     if self.handlers[method]:
+
       if args:
         return self.handlers[method](*args)
       else:
