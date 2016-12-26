@@ -39,22 +39,58 @@ def get_result():
   
 def vote_attack(httpRequest):
   print "voted attack"
-  mycontext['myvote']=True
+  mycontext['lock'].acquire()
   mycontext['generalstatus']='Honest'
-  broadcast_my_vote()
+  mycontext['nodes'].get(get_host()).set_general_status(mycontext['generalstatus'])
+  if mycontext['myvote']==None:
+    print "broadcasted only once"
+    mycontext['myvote'] = True
+    broadcast_my_vote()
+
+  mycontext['lock'].release()
   pass
   
 def vote_retreat(httpRequest):
   print "voted retreat"
-  mycontext['myvote']=False
+  mycontext['lock'].acquire()
   mycontext['generalstatus'] = 'Honest'
-  broadcast_node_vote()
+  mycontext['nodes'].get(get_host()).set_general_status(mycontext['generalstatus'])
+  if mycontext['myvote'] == None:
+    print "broadcasted retreat only once"
+    mycontext['myvote'] = False
+    broadcast_my_vote()
+
+  mycontext['lock'].release()
   pass
   
 def vote_byzantine(httpRequest):
   print "voted byzantine"
   mycontext['generalstatus'] = 'Traitor'
+  mycontext['nodes'].get(get_host()).set_general_status(mycontext['generalstatus'])
+  httpmessage = build_request_msg("byzantine")
+  send_message(httpmessage)
+  check_byzantine()
   pass
+
+# method to calculate the number of traitor nodes
+# only byzantine nodes use this method
+def no_of_traitor_nodes():
+    traitor_nodes = 0
+    for key, node in mycontext['nodes'].iteritems():
+        if node.get_general_status() == 'Traitor':
+            traitor_nodes = traitor_nodes + 1
+
+    return traitor_nodes
+
+def check_byzantine():
+    print "number of traitor nodes"+str(no_of_traitor_nodes())
+    if mycontext['generalstatus'] == 'Traitor' and mycontext['votesreceived'] == (len(mycontext['nodes']) - no_of_traitor_nodes()):
+        print "vote received in traitor to broadcast"+str(len(mycontext['nodes']))
+        broadcast_my_vote()
+    elif mycontext['generalstatus'] == 'Traitor' and mycontext['votesreceived'] < (len(mycontext['nodes']) - no_of_traitor_nodes()):
+        print "waiting for other node's votes to broadcast"
+
+
 
 # ------------------------------------------------------------------------------
 # Creates and adds a new entry to the global variable entries

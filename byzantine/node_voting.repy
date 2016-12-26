@@ -12,10 +12,22 @@ class node_voting:
     def __init__ (self,connection):
         self.connection = connection
         self.node_vote=None
+        self.general_status=None
         self.received_vote=[]
 
     def __str__(self):
-        return "printing node: "+str(self.connection)
+        port=self.get_port_node()
+        return "printing node: "+str(port)+" general status: "+str(self.general_status)+" vote: "+str(self.node_vote)
+
+    def get_port_node(self):
+        port=self.connection.port
+        return str(port)
+
+    def set_general_status(self,status):
+        self.general_status=status
+
+    def get_general_status(self):
+        return self.general_status
 
     def get_node_connection(self):
         return self.connection

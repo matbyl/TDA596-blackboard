@@ -4,6 +4,7 @@ include handlers.repy
 include logicalClock.repy
 include httprequest.repy
 include node_voting.repy
+include byzantine_behavior.repy
 
 # ------------------------------------------------------------------------------
 # Start listening and handle incoming connections to the application
@@ -41,20 +42,29 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
     endpoint = httpRequest.uri
     host = httpRequest.get_host()
 
+
     if msgheader.startswith('vote'):
-      print msgheader
       node = mycontext['nodes'].get(host)
       # if vote of the node is not set then its a fresh vote and we add 1 to the received votes
       # this number will be used by the byzantine node to know whether it has received all the votes from the loyal nodes
-      if node.node_vote!=None:
+      mycontext['lock'].acquire()
+      if node.node_vote==None:
         mycontext['votesreceived']=mycontext['votesreceived']+1
-      node.set_node_vote(method.split(':')[1])
-      if mycontext['generalstatus']=='Traitor' and mycontext['votesreceived']==(len(nodes)-1):
-        broadcast_my_vote()
+        node.set_node_vote(method.split(':')[1])
+      if node.get_general_status()==None:
+        node.set_general_status('Honest')
+      mycontext['lock'].release()
+      check_byzantine()
 
+    if msgheader.startswith('byzantine'):
+      mycontext['nodes'].get(host).set_general_status('Traitor')
 
     if not isHost(host):
        print "received from host host "+str(host)
+       for key, node in mycontext['nodes'].iteritems():
+         print "status:"+str(node)
+
+
     parameters = httpRequest.get_parameters()
     res = ''
     status = 0
@@ -89,24 +99,13 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
 # ------------------------------------------------------------------------------
 
 def broadcast_my_vote():
-
   if mycontext['generalstatus']=='Honest':
-    for key, node in mycontext['nodes'].iteritems():
-      connection=node.get_node_connection()
-
-      httpmessage = build_request_msg("vote:"+str(mycontext['myvote']))
-      if not isHost(connection.get_host()):
-        connection.send_msg(httpmessage)
+    httpmessage = build_request_msg("vote:"+str(mycontext['myvote']))
+    send_message(httpmessage)
   elif mycontext['generalstatus']=='Traitor':
     #do the byzantine#
-    byzantine_votes=compute_byzantine_vote_round1(len(mycontext['nodes'])-1,len(mycontext['nodes']),True)
-    index=-1
-    for key, node in mycontext['nodes'].iteritems():
-      connection=node.get_node_connection()
-      if not isHost(connection.get_host()):
-        index = index + 1;
-        httpmessage = build_request_msg("vote:" +str(byzantine_votes[index]))
-        connection.send_msg(httpmessage)
+    send_byzantine_vote()
+
 
 # ------------------------------------------------------------------------------
 # Main entry point of the program. Initalizes global variables in mycontext
