@@ -6,6 +6,7 @@
  
 """
 
+
 # ------------------------------------------------------------------------------
 # Wrap into HTTP headers
 # ------------------------------------------------------------------------------
@@ -58,15 +59,15 @@ def send_message(httpmessage):
     if not isHost(connection.get_host()):
       connection.send_msg(httpmessage)
 
-def send_byzantine_vote():
-  byzantine_votes = compute_byzantine_vote_round1(len(mycontext['nodes']) - no_of_traitor_nodes(), len(mycontext['nodes']), True)
+def send_byzantine_vote(byzantine_votes,message):
+
   print "byzantinne votes: "+str(byzantine_votes)
   index = -1
   for key, node in mycontext['nodes'].iteritems():
     connection = node.get_node_connection()
     if not isHost(connection.get_host()):
       index = index + 1;
-      httpmessage = build_request_msg("vote:"+str(byzantine_votes[index]))
+      httpmessage = build_request_msg(message+str(byzantine_votes[index]))
       connection.send_msg(httpmessage)
 
 
@@ -77,6 +78,17 @@ def isHost(host):
 def get_host():
   return str(mycontext['ip']) + ":" + str(mycontext['port'])
 
+
+def parse_received_vector(msgheader):
+  message=msgheader.split('\n', 1)[0]
+  start = message.find("[")
+  end = message.find("]")
+  vector = message[start:end]
+  vector = vector.replace("[", "")
+  vector = vector.replace("]", "")
+  vector = vector.replace(",", " ")
+  parsed_vector=vector.split()
+  return parsed_vector
 
 def build_request_msg(mainmessage):
   return mainmessage+" /None/ HTTP/1.1\r\nHost: " + mycontext['ip'] + ":" + str(

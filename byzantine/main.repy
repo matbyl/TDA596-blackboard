@@ -44,25 +44,17 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
 
 
     if msgheader.startswith('vote'):
-      node = mycontext['nodes'].get(host)
-      # if vote of the node is not set then its a fresh vote and we add 1 to the received votes
-      # this number will be used by the byzantine node to know whether it has received all the votes from the loyal nodes
-      mycontext['lock'].acquire()
-      if node.node_vote==None:
-        mycontext['votesreceived']=mycontext['votesreceived']+1
-        node.set_node_vote(method.split(':')[1])
-      if node.get_general_status()==None:
-        node.set_general_status('Honest')
-      mycontext['lock'].release()
-      check_byzantine()
+      first_vote_handler(host,method)
+    if msgheader.startswith('round2'):
+      second_vote_handler(host,msgheader)
 
     if msgheader.startswith('byzantine'):
       mycontext['nodes'].get(host).set_general_status('Traitor')
 
-    if not isHost(host):
-       print "received from host host "+str(host)
-       for key, node in mycontext['nodes'].iteritems():
-         print "status:"+str(node)
+    #if not isHost(host):
+       #print "received from host host "+str(host)
+       #for key, node in mycontext['nodes'].iteritems():
+        # print "status:"+str(node)
 
 
     parameters = httpRequest.get_parameters()
@@ -99,13 +91,29 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
 # ------------------------------------------------------------------------------
 
 def broadcast_my_vote():
-  if mycontext['generalstatus']=='Honest':
-    httpmessage = build_request_msg("vote:"+str(mycontext['myvote']))
-    send_message(httpmessage)
-  elif mycontext['generalstatus']=='Traitor':
-    #do the byzantine#
-    send_byzantine_vote()
+  if mycontext['vote_broadcasted']==False:
+    mycontext['vote_broadcasted']=True
+    if mycontext['generalstatus']=='Honest':
+      httpmessage = build_request_msg("vote:"+str(mycontext['myvote']))
+      send_message(httpmessage)
+    elif mycontext['generalstatus']=='Traitor':
+      #do the byzantine#
+      byzantine_votes = compute_byzantine_vote_round1(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
+      send_byzantine_vote(byzantine_votes,"vote:")
 
+
+def broadcast_second_vote():
+  if mycontext['vector_broadcasted'] == False:
+    mycontext['vector_broadcasted'] = True
+    vector = create_vote_vector()
+    if mycontext['generalstatus'] == 'Honest':
+      print "vector in "+str(mycontext['port'])+" "+str(vector)
+      httpmessage = build_request_msg("round2:" + str(vector))
+      send_message(httpmessage)
+    elif mycontext['generalstatus'] == 'Traitor':
+      # do the byzantine#
+      byzantine_votes = compute_byzantine_vote_round2(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
+      send_byzantine_vote(byzantine_votes,"round2:")
 
 # ------------------------------------------------------------------------------
 # Main entry point of the program. Initalizes global variables in mycontext
@@ -146,6 +154,8 @@ if callfunc == 'initialize':
   mycontext['connection'] = Connection(ip, port)
   mycontext['myvote']=None
   mycontext['generalstatus']=None
+  mycontext['vote_broadcasted'] = False
+  mycontext['vector_broadcasted'] = False
   # Assign a random ID to the vessel between 0-100000 
   # NOTE: There is nothing that promise a unique ID
   mycontext['vesselID'] = str(int(100000 * randomfloat()))
@@ -160,7 +170,7 @@ if callfunc == 'initialize':
   # we need the host before we initialize the logicalClock
   mycontext['clock'] = LogicalClock()
   mycontext['votesreceived']=0
-
+  mycontext['vectorreceived'] = 0
 
   #read html template files
   mycontext['vote_frontpage_template'] = open("vote_frontpage_template.html").read()

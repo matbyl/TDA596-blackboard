@@ -13,11 +13,28 @@ class node_voting:
         self.connection = connection
         self.node_vote=None
         self.general_status=None
-        self.received_vote=[]
+        self.received_vote=None
 
     def __str__(self):
         port=self.get_port_node()
         return "printing node: "+str(port)+" general status: "+str(self.general_status)+" vote: "+str(self.node_vote)
+
+    def get_received_vote(self):
+        return self.received_vote
+
+    def set_received_vector(self,vector):
+        boolean_vector=[]
+        for vote in vector:
+            if vote=='True':
+                boolean_vector.append(True)
+            elif vote=='False':
+                boolean_vector.append(False)
+
+        self.received_vote=boolean_vector
+
+    def print_received(self):
+        port = self.get_port_node()
+        print "node :"+str(port)+" vote: "+str(self.received_vote)
 
     def get_port_node(self):
         port=self.connection.port
@@ -32,12 +49,15 @@ class node_voting:
     def get_node_connection(self):
         return self.connection
 
+    def get_node_vote(self):
+        return self.node_vote
+
     def set_node_vote(self,vote):
-        if vote=='True' or vote=='Attack':
+        if vote=='True' or vote=='Attack' or vote==True:
             self.node_vote=True
-        elif vote=='False' or vote=='Attack':
+        elif vote=='False' or vote=='Attack' or vote==False:
             self.node_vote=False
 
-        print "vote of node: "+str(self.connection.ip)+":"+str(self.connection.port)+" set to: "+str(self.node_vote)
+
 
 
