@@ -66,6 +66,8 @@ def get_all_nodes():
     if isHost(host):
       host_index=index
 
+
   mycontext['host_index']=host_index
+
 
   return nodes

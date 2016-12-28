@@ -10,6 +10,8 @@
 # ------------------------------------------------------------------------------
 # Wrap into HTTP headers
 # ------------------------------------------------------------------------------
+
+
 def make_http_response(status, status_text, htmlresponse=''):
   response_template = "HTTP/1.1 %d %s\r\nContent-type: text/html;charset=UTF-8\r\nContent-length: %s\r\n\r\n%s"
   res = response_template % (status, status_text, str(len(htmlresponse)), htmlresponse)
@@ -59,6 +61,41 @@ def send_message(httpmessage):
     if not isHost(connection.get_host()):
       connection.send_msg(httpmessage)
 
+def calculate_voting_result():
+  print "calculating voting results"
+  result_list=[]
+  nodes= mycontext['nodes']
+  index=0
+
+  while(index< len(nodes)):
+
+    voting_vector=[]
+    vote_ignore_index = -1
+    for key,node in nodes.iteritems():
+      vote_ignore_index=vote_ignore_index+1
+      votes=node.get_received_vote()
+      if index!=vote_ignore_index:
+        voting_vector.append(votes[index])
+    #print "index"+str(index )
+    result_list.append(calculate_max_votes_in_list(voting_vector))
+    index = index + 1
+
+  return result_list
+
+# Process the vote vector
+# input: vote list to process
+# output: result of voting
+
+def calculate_max_votes_in_list(vote_list):
+  num_of_true=vote_list.count(True)
+  num_of_false=vote_list.count(False)
+  if num_of_true>num_of_false:
+    return True
+  elif num_of_false>num_of_true:
+    return False
+  else:
+    return 'Unknown'
+
 def send_byzantine_vote(byzantine_votes,message):
 
   print "byzantinne votes: "+str(byzantine_votes)
@@ -68,6 +105,7 @@ def send_byzantine_vote(byzantine_votes,message):
     if not isHost(connection.get_host()):
       index = index + 1;
       httpmessage = build_request_msg(message+str(byzantine_votes[index]))
+      print "sending "+str(message)+" to port"+str(connection.port)
       connection.send_msg(httpmessage)
 
 

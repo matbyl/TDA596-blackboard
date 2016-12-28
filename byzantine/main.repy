@@ -99,20 +99,29 @@ def broadcast_my_vote():
     elif mycontext['generalstatus']=='Traitor':
       #do the byzantine#
       byzantine_votes = compute_byzantine_vote_round1(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
+      if len(byzantine_votes)%2==0:
+          mycontext['myvote']=True
+
+      else:
+          mycontext['myvote'] = False
+      current_node = mycontext['nodes'].get(get_host())
+      current_node.set_node_vote(mycontext['myvote'])
       send_byzantine_vote(byzantine_votes,"vote:")
 
 
 def broadcast_second_vote():
   if mycontext['vector_broadcasted'] == False:
-    mycontext['vector_broadcasted'] = True
     vector = create_vote_vector()
     if mycontext['generalstatus'] == 'Honest':
-      print "vector in "+str(mycontext['port'])+" "+str(vector)
+
       httpmessage = build_request_msg("round2:" + str(vector))
+      mycontext['vector_broadcasted'] = True
       send_message(httpmessage)
     elif mycontext['generalstatus'] == 'Traitor':
       # do the byzantine#
+
       byzantine_votes = compute_byzantine_vote_round2(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
+      mycontext['vector_broadcasted'] = True
       send_byzantine_vote(byzantine_votes,"round2:")
 
 # ------------------------------------------------------------------------------
@@ -171,13 +180,12 @@ if callfunc == 'initialize':
   mycontext['clock'] = LogicalClock()
   mycontext['votesreceived']=0
   mycontext['vectorreceived'] = 0
-
+  mycontext['myresult']=None
   #read html template files
   mycontext['vote_frontpage_template'] = open("vote_frontpage_template.html").read()
   mycontext['vote_result_template'] = open("vote_result_template.html").read()
   
   # Cool dudes!
   mycontext['authors'] = "Mathias Bylund, Anton Rose"
-
 
   start_application()
