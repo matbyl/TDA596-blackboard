@@ -13,12 +13,12 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
     <!-- Inlined javascript code. This could be optionally hosted in another file on the server and included using 'src' attribute as above -->
     <script>
-      var page_reload_timeout = 30; //in seconds
+      var page_reload_timeout = 10; //in seconds
       var page_reload_count = 0;
       
       function update_contents(){
         page_reload_count += 1;
-        $("#vote_result_placeholder").load("/vote/result", function (data, status) {
+        $("#vote_result_placeholder").load("/result", function (data, status) {
           //alert("Data: " + data + "\nStatus: " + status);
           $("#boardcontents_status_placeholder").text(page_reload_count + ": " + status);
         });
@@ -56,10 +56,10 @@ An error shown here means the server is not responding -->
     <!-- This place shows the buttons used to request a vote -->
     <div id="vote_form_placeholder">
       <h3>Vote</h3>
-      <form id="usrform" target="noreload-form-target">
-        <input type="submit" formmethod="post" formaction="/vote/attack" value="Attack" />
-        <input type="submit" formmethod="post" formaction="/vote/retreat" value="Retreat" />
-        <input type="submit" formmethod="post" formaction="/vote/byzantine" value="Byzantine" />
+      <form id="usrform" method="post" action="/vote" target="noreload-form-target">
+        <button type="submit" name="vote" value="attack">Attack</button>
+        <button type="submit" name="vote" value="retreat">Retreat</button>
+        <button type="submit" name="vote" value="byzantine">Byzantine</button>
       </form>
     </div>
 

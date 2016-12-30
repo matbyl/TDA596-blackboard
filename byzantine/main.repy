@@ -33,8 +33,6 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
     httpRequest = HttpRequest()
     httpRequest.parse(msgheader)
 
-
-
     # print httpRequest.get_info()
 
     write_methods = ['POST', 'PUT', 'DELETE']
@@ -111,18 +109,19 @@ def broadcast_my_vote():
 
 def broadcast_second_vote():
   if mycontext['vector_broadcasted'] == False:
-    vector = create_vote_vector()
-    if mycontext['generalstatus'] == 'Honest':
 
-      httpmessage = build_request_msg("round2:" + str(vector))
+    if mycontext['generalstatus'] == 'Honest':
+      votes = get_vote_vector()
+      httpmessage = build_request_msg("round2:" + str(votes))
       mycontext['vector_broadcasted'] = True
       send_message(httpmessage)
+
     elif mycontext['generalstatus'] == 'Traitor':
       # do the byzantine#
+      votes = compute_byzantine_vote_round2(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
 
-      byzantine_votes = compute_byzantine_vote_round2(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
       mycontext['vector_broadcasted'] = True
-      send_byzantine_vote(byzantine_votes,"round2:")
+      send_byzantine_vote(votes,"round2:")
 
 # ------------------------------------------------------------------------------
 # Main entry point of the program. Initalizes global variables in mycontext
@@ -135,11 +134,9 @@ if callfunc == 'initialize':
 
   mycontext['api'] = Api()
   mycontext['api'].add_resource({'GET': get_index}, ['/'])
-  mycontext['api'].add_resource({'GET': get_result}, ['/vote/result'])
-  mycontext['api'].add_resource({'POST': vote_attack}, ['/vote/attack'])
-  mycontext['api'].add_resource({'POST': vote_retreat}, ['/vote/retreat'])
-  mycontext['api'].add_resource({'POST': vote_byzantine}, ['/vote/byzantine']) 
-  
+  mycontext['api'].add_resource({'GET': get_result}, ['/result'])
+  mycontext['api'].add_resource({'POST': vote}, ['/vote'])
+
   # whenever this vessel gets a connection on its IP:port it'll call function board_connection_handler
   if len(callargs) == 1 or len(callargs) == 2:
     port = int(callargs[0])

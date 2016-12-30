@@ -56,6 +56,7 @@ def parse_endpoint(endpoint):
 
 
 def send_message(httpmessage):
+  print "sending message"
   for key, node in mycontext['nodes'].iteritems():
     connection=node.get_node_connection()
     if not isHost(connection.get_host()):
@@ -131,8 +132,14 @@ def parse_received_vector(msgheader):
 def build_request_msg(mainmessage):
   return mainmessage+" /None/ HTTP/1.1\r\nHost: " + mycontext['ip'] + ":" + str(
     mycontext['port']) + "\r\nConnection: Close\r\n"
+
 # ------------------------------------------------------------------------------
-# Retrieve elapsed time since the start of the program
+# Retrieves vote vector
 # ------------------------------------------------------------------------------
-def get_elapsed_time():
-  return mycontext['eventualConsistency'] - mycontext['startTime']
+def get_vote_vector():
+  received_vector=[]
+  
+  for key, node in mycontext['nodes'].iteritems():
+      received_vector.append(node.get_node_vote())
+
+  return received_vector
