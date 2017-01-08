@@ -45,6 +45,10 @@ def get_result():
   else:
     return make_http_response(200, 'OK', "Awaiting to reach agreement ")
 
+# ------------------------------------------------------------------------------
+# Method called when generals vote
+# ------------------------------------------------------------------------------
+
 def vote(httpRequest):
     vote = httpRequest.get_parameter('vote')
     print "Voted: " + vote
@@ -75,15 +79,15 @@ def vote_byzantine():
   httpmessage = build_request_msg("byzantine")
   send_message(httpmessage)
   check_byzantine()
-  print "vote received in byzantine node " + str(mycontext['votesreceived'])
-
   if mycontext['votesreceived'] == len(mycontext['nodes']) - 1:
       print "time to send next vector in byzantine node"
       broadcast_second_vote()
 
-
-# method to calculate the number of traitor nodes
+# ------------------------------------------------------------------------------
+# Method to calculate the number of traitor nodes
 # only byzantine nodes use this method
+# return- the number of traitor nodes
+# ------------------------------------------------------------------------------
 def no_of_traitor_nodes():
     traitor_nodes = 0
     for key, node in mycontext['nodes'].iteritems():
@@ -92,38 +96,54 @@ def no_of_traitor_nodes():
 
     return traitor_nodes
 
+# ------------------------------------------------------------------------------
+# Method used by byzantine nodes to check whether its time to broadcast
+# ------------------------------------------------------------------------------
 def check_byzantine():
     print "\n number of traitor nodes" + str(no_of_traitor_nodes())
-    if mycontext['generalstatus'] == 'Traitor' and mycontext['votesreceived'] == (len(mycontext['nodes']) - no_of_traitor_nodes()):
-      print "vote received in traitor to broadcast " + str(len(mycontext['nodes']))
-      if mycontext['vote_broadcasted'] == False:
-        broadcast_my_vote()
-    elif mycontext['generalstatus'] == 'Traitor' and mycontext['votesreceived'] < (len(mycontext['nodes']) - no_of_traitor_nodes()):
-      print "waiting for other node's votes to broadcast"
+    if mycontext['generalstatus'] == 'Traitor':
+        if mycontext['votesreceived'] == (len(mycontext['nodes']) - no_of_traitor_nodes()):
+          print "Number of votes received in traitor: " + str(mycontext['votesreceived'])
+          if mycontext['vote_broadcasted'] == False:
+            broadcast_my_vote()
+          elif mycontext['vote_broadcasted'] == True:
+            broadcast_second_vote()
+        elif  mycontext['votesreceived'] < (len(mycontext['nodes']) - no_of_traitor_nodes()):
+          print "waiting for other node's votes to broadcast"
 
-
-def first_vote_handler(host,method):
+# ------------------------------------------------------------------------------
+# Handles the initial vote from generals
+# input: host- the host that sent vote; msg- the message to parse
+# ------------------------------------------------------------------------------
+def first_vote_handler(host,msg):
     node = mycontext['nodes'].get(host)
     # if vote of the node is not set then its a fresh vote and we add 1 to the received votes
     # this number will be used by the byzantine node to know whether it has received all the votes from the loyal nodes
     mycontext['lock'].acquire()
     if node.node_vote == None:
         mycontext['votesreceived'] = mycontext['votesreceived'] + 1
-        node.set_node_vote(method.split(':')[1])
+        node.set_node_vote(msg.split(':')[1])
     if node.get_general_status() == None:
         node.set_general_status('Honest')
 
     mycontext['lock'].release()
     check_byzantine()
     if mycontext['votesreceived'] == len(mycontext['nodes']) - 1:
-        print "time to send next vectors"
+        print "Vector sending -Initiated"
         broadcast_second_vote()
+
+
+# ------------------------------------------------------------------------------
+# Handles the initial vote from generals
+# input: host- the host that sent vote; msgheader- the message header to parse
+# ------------------------------------------------------------------------------
 
 def second_vote_handler(host,msgheader):
 
     node = mycontext['nodes'].get(host)
     firstline = msgheader.split('\n', 1)[0]
     vector = parse_received_vector(firstline)
+    print "vector received from "+host+ " vect: "+str(vector)
     mycontext['lock'].acquire()
 
     if node.get_received_vote() == None:
@@ -134,8 +154,13 @@ def second_vote_handler(host,msgheader):
             for key, port in mycontext['nodes'].iteritems():
                 port.print_received()
             mycontext['myresult']=calculate_voting_result()
-
+        elif mycontext['generalstatus'] == 'Traitor':
+            if mycontext['vectorreceived'] == len(mycontext['nodes']) - no_of_traitor_nodes():
+                print "vector received equlas traitor vectors from hones votes"
+                mycontext['myresult'] = calculate_voting_result()
     mycontext['lock'].release()
+
+    check_byzantine()
     currentnode=mycontext['nodes'].get(get_host())
 
     if currentnode.get_received_vote()==None or currentnode.get_received_vote()==[]:

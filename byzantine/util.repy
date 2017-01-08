@@ -62,6 +62,10 @@ def send_message(httpmessage):
     if not isHost(connection.get_host()):
       connection.send_msg(httpmessage)
 
+# ------------------------------------------------------------------------------
+# Utility function to calculate the results from the vectors in a node
+# ------------------------------------------------------------------------------
+
 def calculate_voting_result():
   print "calculating voting results"
   result_list=[]
@@ -75,8 +79,10 @@ def calculate_voting_result():
     for key,node in nodes.iteritems():
       vote_ignore_index=vote_ignore_index+1
       votes=node.get_received_vote()
-      if index!=vote_ignore_index:
+      if index!=vote_ignore_index and votes is not None:
         voting_vector.append(votes[index])
+      elif votes is None:
+        voting_vector.append('None')
     #print "index"+str(index )
     result_list.append(calculate_max_votes_in_list(voting_vector))
     index = index + 1
@@ -103,7 +109,7 @@ def send_byzantine_vote(byzantine_votes,message):
   index = -1
   for key, node in mycontext['nodes'].iteritems():
     connection = node.get_node_connection()
-    if not isHost(connection.get_host()):
+    if not isHost(connection.get_host()) and node.get_general_status()=='Honest':
       index = index + 1;
       httpmessage = build_request_msg(message+str(byzantine_votes[index]))
       print "sending "+str(message)+" to port"+str(connection.port)

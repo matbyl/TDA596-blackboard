@@ -46,9 +46,10 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
     if msgheader.startswith('round2'):
       second_vote_handler(host,msgheader)
 
+
     if msgheader.startswith('byzantine'):
       mycontext['nodes'].get(host).set_general_status('Traitor')
-
+      check_byzantine()
     #if not isHost(host):
        #print "received from host host "+str(host)
        #for key, node in mycontext['nodes'].iteritems():
@@ -85,9 +86,7 @@ def connection_handler(ip, port, socketobj, thiscommhandle, listencommhandle):
 
 # ------------------------------------------------------------------------------
 # Broadcast the node's votes to neighboring nodes
-# Assumption: only one byzantine node in the neighbors
 # ------------------------------------------------------------------------------
-
 def broadcast_my_vote():
   if mycontext['vote_broadcasted']==False:
     mycontext['vote_broadcasted']=True
@@ -97,21 +96,26 @@ def broadcast_my_vote():
     elif mycontext['generalstatus']=='Traitor':
       #do the byzantine#
       byzantine_votes = compute_byzantine_vote_round1(len(mycontext['nodes']) - no_of_traitor_nodes(),len(mycontext['nodes']), True)
-      if len(byzantine_votes)%2==0:
-          mycontext['myvote']=True
-
+      random=(randomfloat() * 10)
+      if random < 5:
+          mycontext['myvote'] = True
       else:
           mycontext['myvote'] = False
+      # sets the vote of the current byzantine node randomly to true or false
       current_node = mycontext['nodes'].get(get_host())
       current_node.set_node_vote(mycontext['myvote'])
       send_byzantine_vote(byzantine_votes,"vote:")
 
-
+# ------------------------------------------------------------------------------
+# Broadcast the node's vector to neighboring nodes
+# ------------------------------------------------------------------------------
 def broadcast_second_vote():
   if mycontext['vector_broadcasted'] == False:
 
     if mycontext['generalstatus'] == 'Honest':
       votes = get_vote_vector()
+      current_node = mycontext['nodes'].get(get_host())
+      current_node.set_received_vector(votes)
       httpmessage = build_request_msg("round2:" + str(votes))
       mycontext['vector_broadcasted'] = True
       send_message(httpmessage)
@@ -175,8 +179,11 @@ if callfunc == 'initialize':
 
   # we need the host before we initialize the logicalClock
   mycontext['clock'] = LogicalClock()
+
+  # variables that monitor the number of received votes and vector
   mycontext['votesreceived']=0
   mycontext['vectorreceived'] = 0
+
   mycontext['myresult']=None
   #read html template files
   mycontext['vote_frontpage_template'] = open("vote_frontpage_template.html").read()
